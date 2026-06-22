@@ -1,6 +1,5 @@
-// frontend/src/components/AddTaskDialog.tsx
 import { createSignal, Show } from "solid-js";
-import { Link, X, Download, AlertTriangle } from "lucide-solid";
+import { Link, X, Download, TriangleAlert } from "lucide-solid";
 import { TriggerNewDownload } from "~/../wailsjs/go/wailsbridge/WailsBridge";
 
 export function AddTaskDialog(props: { onClose: () => void }) {
@@ -53,7 +52,7 @@ export function AddTaskDialog(props: { onClose: () => void }) {
           {/* Error Bound Warning Alert Panel */}
           <Show when={errorMsg()}>
             <div class="p-2 bg-destructive/10 border border-destructive/20 text-destructive text-[11px] font-mono rounded-sm flex items-start space-x-2 animate-in slide-in-from-top-1 duration-200">
-              <AlertTriangle class="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <TriangleAlert class="h-3.5 w-3.5 shrink-0 mt-0.5" />
               <span>{errorMsg()}</span>
             </div>
           </Show>
