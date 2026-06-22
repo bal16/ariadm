@@ -8,28 +8,28 @@ Here is the updated **Task / To-Do List** for your download manager project, tra
 
 _Target: Project structure initialized and ready to compile test suites._
 
-- [v] **Task 0.1:** Initialize a blank Wails project using the TypeScript vanilla template:
+- [x] **Task 0.1:** Initialize a blank Wails project using the TypeScript vanilla template:
 
 ```bash
 wails init -n go-aria2-dm -template vanilla-ts
 
 ```
 
-- [v] **Task 0.2 (Official SolidJS Setup):** Delete the default contents of the `frontend/` directory, then re-generate it using the official Vite initializer:
+- [x] **Task 0.2 (Official SolidJS Setup):** Delete the default contents of the `frontend/` directory, then re-generate it using the official Vite initializer:
 
 ```bash
 npm create vite@latest frontend -- --template solid-ts
 
 ```
 
-- [v] **Task 0.3:** Install the `testify` testing library in your Go project root:
+- [x] **Task 0.3:** Install the `testify` testing library in your Go project root:
 
 ```bash
 go get github.com/stretchr/testify
 
 ```
 
-- [v] **Task 0.4:** Create the internal backend directory tree in the project root:
+- [x] **Task 0.4:** Create the internal backend directory tree in the project root:
 
 ```text
 internal/
@@ -50,15 +50,15 @@ internal/
 
 _Target: Manage application preferences (`config.json`) and support live synchronization with aria2c._
 
-- [v] **Task 1.1:** Define the `AppConfig` struct in `internal/domain/config/entity.go` (fields: `DefaultDownloadPath`, `SpeedLimit`, etc.).
-- [v] **Task 1.2:** Define the `ConfigRepository` interface in `internal/domain/config/repository.go`.
-- [v] **Task 1.3 (TDD - GetConfig):**
-- [v] **RED**: Create `service_test.go`, write a manual `ConfigRepositoryMock`, and draft the `TestGetConfig_Success` case.
-- [v] **GREEN**: Create `service.go`, implement the `ConfigService` struct and its `GetConfig()` method. Run `go test ./...` until it passes.
+- [x] **Task 1.1:** Define the `AppConfig` struct in `internal/domain/config/entity.go` (fields: `DefaultDownloadPath`, `SpeedLimit`, etc.).
+- [x] **Task 1.2:** Define the `ConfigRepository` interface in `internal/domain/config/repository.go`.
+- [x] **Task 1.3 (TDD - GetConfig):**
+- [x] **RED**: Create `service_test.go`, write a manual `ConfigRepositoryMock`, and draft the `TestGetConfig_Success` case.
+- [x] **GREEN**: Create `service.go`, implement the `ConfigService` struct and its `GetConfig()` method. Run `go test ./...` until it passes.
 
-- [v] **Task 1.4 (TDD - UpdateSettings):**
-- [v] **RED**: Write the `TestUpdateSettings_Success` case, expecting data persistence to a JSON file _and_ an RPC call to aria2c.
-- [v] **GREEN**: Implement the `UpdateSettings()` method in your service.
+- [x] **Task 1.4 (TDD - UpdateSettings):**
+- [x] **RED**: Write the `TestUpdateSettings_Success` case, expecting data persistence to a JSON file _and_ an RPC call to aria2c.
+- [x] **GREEN**: Implement the `UpdateSettings()` method in your service.
 
 ---
 
@@ -66,15 +66,15 @@ _Target: Manage application preferences (`config.json`) and support live synchro
 
 _Target: Handle the download queue logic, link validation, and task control commands._
 
-- [ ] **Task 2.1:** Create the `Task` struct (Entity) and `TaskRepository` interface in `internal/domain/task/`.
-- [ ] **Task 2.2 (TDD - DownloadFile):**
-- [ ] **RED**: Write the `TestDownloadFile_Success` case. Manually mock `TaskRepository` and `Aria2Client`. Map out the expected sequence: Get path from config ➡️ Fire RPC ➡️ Save to SQLite.
-- [ ] **GREEN**: Implement the `DownloadFile(url string)` method in `TaskService`.
-- [ ] **Refactor**: Add URL format validation (Regex) before triggering the RPC layer.
+- [x] **Task 2.1:** Create the `Task` struct (Entity) and `TaskRepository` interface in `internal/domain/task/`.
+- [x] **Task 2.2 (TDD - DownloadFile):**
+- [x] **RED**: Write the `TestDownloadFile_Success` case. Manually mock `TaskRepository` and `Aria2Client`. Map out the expected sequence: Get path from config ➡️ Fire RPC ➡️ Save to SQLite.
+- [x] **GREEN**: Implement the `DownloadFile(url string)` method in `TaskService`.
+- [x] **Refactor**: Add URL format validation (Regex) before triggering the RPC layer.
 
-- [ ] **Task 2.3 (TDD - TogglePause):**
-- [ ] **RED**: Write test scenarios for both pausing and resuming tasks based on the current GID status in the database.
-- [ ] **GREEN**: Implement the `TogglePauseTask(taskID string)` method.
+- [x] **Task 2.3 (TDD - TogglePause):**
+- [x] **RED**: Write test scenarios for both pausing and resuming tasks based on the current GID status in the database.
+- [x] **GREEN**: Implement the `TogglePauseTask(taskID string)` method.
 
 ---
 
