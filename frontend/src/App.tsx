@@ -22,9 +22,11 @@ import {
   Trash2,
   Activity,
 } from "lucide-solid";
+import { AddTaskDialog } from "./components/AddTaskDialog";
 
 export default function App() {
   const [showPrefs, setShowPrefs] = createSignal(false);
+  const [showAddTask, setShowAddTask] = createSignal(false); // 👈 Add visibility hook
 
   return (
     <div class="h-screen w-screen flex flex-col overflow-hidden relative select-none bg-background text-foreground font-sans antialiased">
@@ -44,7 +46,10 @@ export default function App() {
             File
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-44 bg-popover border border-border text-popover-foreground shadow-md">
-            <DropdownMenuItem class="text-xs font-medium cursor-pointer flex items-center space-x-2">
+            <DropdownMenuItem
+              onClick={() => setShowAddTask(true)} // 👈 Connect layout drop toggle
+              class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+            >
               <Plus class="h-3.5 w-3.5 text-muted-foreground" />
               <span class="flex-1">New Task</span>
               <DropdownMenuShortcut class="font-mono text-[10px]">
@@ -113,6 +118,7 @@ export default function App() {
       <div class="flex items-center justify-between p-2 border-b border-border bg-muted/10 z-30">
         <div class="flex items-center space-x-1.5">
           <Button
+            onClick={() => setShowAddTask(true)} // 👈 Connect secondary master button event trigger
             size="sm"
             class="h-7 px-2.5 text-xs bg-primary text-primary-foreground font-semibold rounded shadow-sm hover:opacity-90 flex items-center space-x-1"
           >
@@ -179,9 +185,14 @@ export default function App() {
         </div>
       </div>
 
-      {/* Modals Layer Overlay */}
+      {/* Preferences Modal Mount Node */}
       <Show when={showPrefs()}>
         <Preferences onClose={() => setShowPrefs(false)} />
+      </Show>
+
+      {/* Add Task Modal Mount Node 👈 Mount the layout frame injector conditional node */}
+      <Show when={showAddTask()}>
+        <AddTaskDialog onClose={() => setShowAddTask(false)} />
       </Show>
     </div>
   );
