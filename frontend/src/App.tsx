@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js";
-// import "./App.css";
+import "./app.css";
+import { Button } from "~/components/ui/button";
 
 function App() {
   const [count, setCount] = createSignal(0);
@@ -13,13 +14,9 @@ function App() {
             Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
           </p>
         </div>
-        <button
-          type="button"
-          class="border border-white-1 px-3 py-2 cursor-pointer"
-          onClick={() => setCount((count) => count + 1)}
-        >
+        <Button type="button" onClick={() => setCount((count) => count + 1)}>
           Count is {count()}
-        </button>
+        </Button>
       </section>
     </div>
   );

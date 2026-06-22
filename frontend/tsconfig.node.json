@@ -6,6 +6,13 @@
     "module": "esnext",
     "types": ["node"],
     "skipLibCheck": true,
+    "ignoreDeprecations": "6.0",
+
+    /* Path Aliasing Mapping */
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",

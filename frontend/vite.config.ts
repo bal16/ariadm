@@ -1,10 +1,14 @@
-import { defineConfig } from "vite";
+import path from "node:path";
+
 import solid from "vite-plugin-solid";
-import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [solid(), tailwindcss()],
-  build: {
-    target: "esnext",
+  plugins: [solid()],
+  base: ".",
+  resolve: {
+    alias: {
+      "~": path.resolve(__dirname, "./src"),
+    },
   },
 });
