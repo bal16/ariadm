@@ -14,6 +14,7 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed all:frontend/dist
@@ -69,6 +70,18 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			app.OnStartup(ctx)    // 1. Fire up your aria2c daemon engine first
 			bridge.OnStartup(ctx) // 2. Pass context to the bridge to launch the telemetry ticker
+		},
+		OnBeforeClose: func(ctx context.Context) (prevent bool) {
+			// Emit event to frontend to show quit confirmation dialog
+			runtime.EventsEmit(ctx, "app:request-close")
+			return true // Prevent closing directly
+		},
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId: "ariadm-unique-lock-8f2k",
+			OnSecondInstanceLaunch: func(secondInstanceData options.SecondInstanceData) {
+				// Re-show window if it was hidden in background
+				runtime.WindowShow(app.ctx)
+			},
 		},
 		Bind: []interface{}{
 			app,

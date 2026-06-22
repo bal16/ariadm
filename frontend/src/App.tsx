@@ -11,9 +11,11 @@ import {
 import { Preferences } from "~/components/Preferences";
 import { AddTaskDialog } from "~/components/AddTaskDialog";
 import { DownloadList } from "~/components/DownloadList";
+import { DeleteConfirmDialog } from "~/components/DeleteConfirmDialog";
+import { QuitConfirmDialog } from "~/components/QuitConfirmDialog";
 import { Button } from "~/components/ui/button";
 import { task } from "~/../wailsjs/go/models";
-import { EventsOn, EventsOff } from "~/../wailsjs/runtime/runtime";
+import { EventsOn, EventsOff, Quit, Hide } from "~/../wailsjs/runtime/runtime";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +32,9 @@ import {
 export default function App() {
   const [showPrefs, setShowPrefs] = createSignal(false);
   const [showAddTask, setShowAddTask] = createSignal(false);
+  const [showQuitDialog, setShowQuitDialog] = createSignal(false);
+  const [taskToDelete, setTaskToDelete] = createSignal<string | null>(null);
+  const [isDeleting, setIsDeleting] = createSignal(false);
   const [engineStatus, setEngineStatus] = createSignal("Connecting");
   const [tasks, setTasks] = createSignal<task.Task[]>([]);
 
@@ -78,12 +83,27 @@ export default function App() {
     EventsOn("engine:status", (status: string) => {
       setEngineStatus(status === "running" ? "Running" : "Disconnected");
     });
-  });
 
-  onCleanup(() => {
-    // Clean up event stream listeners to prevent memory issues during live reload
-    EventsOff("tasks:update");
-    EventsOff("engine:status");
+    EventsOn("app:request-close", () => {
+      setShowQuitDialog(true);
+    });
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        setShowAddTask((prev) => !prev);
+      } else if (e.ctrlKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setShowPrefs((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    onCleanup(() => {
+      // Clean up event stream listeners to prevent memory issues during live reload
+      EventsOff("tasks:update", "engine:status", "app:request-close");
+      window.removeEventListener("keydown", handleKeyDown);
+    });
   });
 
   // Call your Go service layer rather than modifying mock arrays locally
@@ -95,14 +115,34 @@ export default function App() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
+    setTaskToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    const id = taskToDelete();
+    if (!id) return;
+    
+    setIsDeleting(true);
     try {
       await DeleteTask(id);
       // Optimistic removal from local state after backend confirms
       setTasks(tasks().filter((t) => t.id !== id));
+      setTaskToDelete(null);
     } catch (err) {
       console.error("Failed to delete task:", err);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleQuit = () => {
+    Quit();
+  };
+
+  const handleBackground = () => {
+    setShowQuitDialog(false);
+    Hide();
   };
 
   return (
@@ -242,6 +282,22 @@ export default function App() {
 
       <Show when={showAddTask()}>
         <AddTaskDialog onClose={() => setShowAddTask(false)} />
+      </Show>
+
+      <Show when={taskToDelete() !== null}>
+        <DeleteConfirmDialog
+          onClose={() => setTaskToDelete(null)}
+          onConfirm={confirmDelete}
+          isDeleting={isDeleting()}
+        />
+      </Show>
+
+      <Show when={showQuitDialog()}>
+        <QuitConfirmDialog
+          onClose={() => setShowQuitDialog(false)}
+          onQuit={handleQuit}
+          onBackground={handleBackground}
+        />
       </Show>
     </div>
   );

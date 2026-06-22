@@ -128,3 +128,12 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 - [x] **Task 8.1 (Delete Task):** Implement full delete pipeline — `TaskRepository.Delete`, `aria2.remove` for active/paused tasks, `aria2.removeDownloadResult` for completed/errored entries, `WailsBridge.DeleteTask` exposed to Wails, and frontend `handleDelete` wired to the real backend call.
 
 ---
+
+#### ✨ PHASE 9: UI Polish & UX Features (Completed)
+
+- [x] **Task 9.1 (Delete Confirmation Dialog):** Add a robust confirmation dialog before dropping tasks.
+- [x] **Task 9.2 (Global Keybinds):** Wire up `Ctrl+N` (New Task) and `Ctrl+P` (Preferences) at the global `App.tsx` layer.
+- [x] **Task 9.3 (Close/Quit Confirmation):** Catch the window close event via `OnBeforeClose` to show a prompt dialog.
+- [x] **Task 9.4 (Background Functionality):** Implement seamless running in the background. Hiding the window keeps the active daemon alive, and configuring Wails `SingleInstanceLock` ensures that reopening the app summons the existing process back to the foreground seamlessly.
+
+---
