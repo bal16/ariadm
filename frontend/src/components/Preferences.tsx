@@ -1,4 +1,3 @@
-// frontend/src/components/Preferences.tsx
 import { createResource, createSignal, Show, For } from "solid-js";
 import {
   GetApplicationConfig,
