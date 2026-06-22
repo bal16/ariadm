@@ -18,8 +18,13 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+var (
+	APP_NAME = "ariadm"
+	RPC_PORT = "6800"
+	PORT     = "9999"
+)
+
 func main() {
-	APP_NAME := "go-ariadm"
 	// 1. Setup Infrastructure Layers
 	configRepo, err := database.NewJSONConfigRepository(APP_NAME)
 	if err != nil {
@@ -31,7 +36,7 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	rpcClient := rpc.NewAria2Client("http://127.0.0.1:6800/jsonrpc")
+	rpcClient := rpc.NewAria2Client("http://127.0.0.1:" + RPC_PORT + "/jsonrpc")
 
 	// 2. Setup Core Domain Services (Injecting Dependencies)
 	configService := config.NewConfigService(configRepo, rpcClient)
@@ -40,7 +45,7 @@ func main() {
 	// 3. Setup Ingress Controllers
 	bridge := wailsbridge.NewWailsBridge(configService, taskService)
 
-	localHTTPServer := httpserver.NewHTTPServer("9999", taskService)
+	localHTTPServer := httpserver.NewHTTPServer(PORT, taskService)
 	if err := localHTTPServer.Start(); err != nil {
 		log.Printf("Warning: Extension listener failed to bind: %v", err)
 	}
@@ -51,7 +56,7 @@ func main() {
 
 	// Create application with options
 	err = wails.Run(&options.App{
-		Title:  "ariadm",
+		Title:  APP_NAME,
 		Width:  1024,
 		Height: 768,
 		AssetServer: &assetserver.Options{
