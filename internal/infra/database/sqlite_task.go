@@ -4,6 +4,8 @@ import (
 	"ariadm/internal/domain/task"
 	"database/sql"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 type SQLiteTaskRepository struct {
@@ -21,14 +23,14 @@ func NewSQLiteTaskRepository(dbPath string) (*SQLiteTaskRepository, error) {
 	schema := `
 	CREATE TABLE IF NOT EXISTS tasks (
 		id TEXT PRIMARY KEY,
-		gid TEXT NOT nil UNIQUE,
-		url TEXT NOT nil,
+		gid TEXT NOT NULL UNIQUE,
+		url TEXT NOT NULL,
 		file_name TEXT,
 		total_length INTEGER DEFAULT 0,
 		completed_length INTEGER DEFAULT 0,
 		speed INTEGER DEFAULT 0,
-		status TEXT NOT nil,
-		created_at DATETIME NOT nil
+		status TEXT NOT NULL,
+		created_at DATETIME NOT NULL
 	);`
 
 	if _, err := db.Exec(schema); err != nil {
