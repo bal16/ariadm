@@ -3,6 +3,8 @@ package database
 import (
 	"ariadm/internal/domain/task"
 	"database/sql"
+	"os"
+	"path/filepath"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -12,9 +14,21 @@ type SQLiteTaskRepository struct {
 	db *sql.DB
 }
 
-func NewSQLiteTaskRepository(dbPath string) (*SQLiteTaskRepository, error) {
-	// 1. Open connection using the pure Go sqlite driver
-	db, err := sql.Open("sqlite", dbPath)
+func NewSQLiteTaskRepository(appName string, dbPath string) (*SQLiteTaskRepository, error) {
+	appDir, err := ResolveAppDir(appName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the directory path if it doesn't exist yet (important for prod)
+	if err := os.MkdirAll(appDir, 0755); err != nil {
+		return nil, err
+	}
+
+	fullDBPath := filepath.Join(appDir, dbPath)
+
+	// Open connection using the pure Go sqlite driver
+	db, err := sql.Open("sqlite", fullDBPath)
 	if err != nil {
 		return nil, err
 	}

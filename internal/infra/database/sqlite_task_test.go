@@ -12,15 +12,18 @@ import (
 )
 
 func TestSQLiteTaskRepository_Integration(t *testing.T) {
-	// 1. Setup: Specify a dedicated test database path
+	// Force Dev mode during testing to keep it in the current directory
+	database.IsDev = true
+
+	testAppName := "ariadm_test"
 	testDBPath := "integration_test.db"
 
-	// Ensure a clean environment before starting, and remove the file after the test is done
+	// Ensure clean local environment
 	os.Remove(testDBPath)
 	defer os.Remove(testDBPath)
 
-	// 2. Initialize the SQLiteTaskRepository
-	repo, err := database.NewSQLiteTaskRepository(testDBPath)
+	// Update initialization to match the 2-argument signature
+	repo, err := database.NewSQLiteTaskRepository(testAppName, testDBPath)
 	assert.NoError(t, err)
 	assert.NotNil(t, repo)
 

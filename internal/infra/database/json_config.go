@@ -13,18 +13,20 @@ type JSONConfigRepository struct {
 }
 
 func NewJSONConfigRepository(appName string) (*JSONConfigRepository, error) {
-	// 1. Resolve the native OS configuration directory (~/.config or %APPDATA%)
-	baseDir, err := os.UserConfigDir()
+	// Dynamically resolve the application directory based on mode
+	appDir, err := ResolveAppDir(appName)
 	if err != nil {
 		return nil, err
 	}
 
-	appDir := filepath.Join(baseDir, appName)
-
-	return &JSONConfigRepository{
+	repo := &JSONConfigRepository{
 		appName:  appName,
 		filePath: filepath.Join(appDir, "config.json"),
-	}, nil
+	}
+
+	repo.Load()
+
+	return repo, nil
 }
 
 func (r *JSONConfigRepository) Load() (*config.AppConfig, error) {

@@ -36,7 +36,7 @@ test/watch:
 ## dev: Run the application in Wails development mode (hot-reloading)
 dev:
 	@echo "==> Starting Wails development server..."
-	wails dev
+	APP_ENV=development wails dev
 
 ## build: Build the production application for the current host OS
 build:

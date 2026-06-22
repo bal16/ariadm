@@ -19,13 +19,14 @@ import (
 var assets embed.FS
 
 func main() {
+	APP_NAME := "go-ariadm"
 	// 1. Setup Infrastructure Layers
-	configRepo, err := database.NewJSONConfigRepository("go-aria2-dm")
+	configRepo, err := database.NewJSONConfigRepository(APP_NAME)
 	if err != nil {
 		log.Fatalf("Failed to initialize config storage: %v", err)
 	}
 
-	taskRepo, err := database.NewSQLiteTaskRepository("downloads.db")
+	taskRepo, err := database.NewSQLiteTaskRepository(APP_NAME, "downloads.db")
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
