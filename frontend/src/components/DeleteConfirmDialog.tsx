@@ -1,10 +1,13 @@
+import { createSignal } from "solid-js";
 import { TriangleAlert, Trash2 } from "lucide-solid";
 
 export function DeleteConfirmDialog(props: {
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (deleteFiles: boolean) => void;
   isDeleting: boolean;
 }) {
+  const [deleteFiles, setDeleteFiles] = createSignal(false);
+
   return (
     <div class="absolute top-20 left-1/2 -translate-x-1/2 z-50 p-1 animate-in fade-in zoom-in-95 duration-150">
       <div class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-[380px] flex flex-col overflow-hidden">
@@ -25,6 +28,19 @@ export function DeleteConfirmDialog(props: {
             This action cannot be undone. The task will be removed from your download list and the active daemon.
           </p>
 
+          <label class="flex items-center space-x-2 mt-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              class="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+              checked={deleteFiles()}
+              onChange={(e) => setDeleteFiles(e.currentTarget.checked)}
+              disabled={props.isDeleting}
+            />
+            <span class="text-[11px] font-medium text-foreground">
+              Also delete downloaded files from disk
+            </span>
+          </label>
+
           <div class="flex justify-end space-x-1.5 pt-3 mt-4 border-t border-border">
             <button
               type="button"
@@ -36,7 +52,7 @@ export function DeleteConfirmDialog(props: {
             </button>
             <button
               type="button"
-              onClick={props.onConfirm}
+              onClick={() => props.onConfirm(deleteFiles())}
               disabled={props.isDeleting}
               class="px-3 py-1 text-xs bg-destructive text-destructive-foreground font-semibold rounded-sm hover:bg-destructive/90 disabled:opacity-50 shadow-sm flex items-center space-x-1 transition-colors"
             >

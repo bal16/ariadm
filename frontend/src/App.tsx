@@ -2,8 +2,8 @@ import { createSignal, onMount, onCleanup, Show } from "solid-js";
 import { useColorMode } from "@kobalte/core";
 import {
   Plus,
-  Pause,
-  Play,
+  // Pause,
+  // Play,
   Search,
   Settings,
   Activity,
@@ -20,7 +20,7 @@ import { DeleteConfirmDialog } from "~/components/DeleteConfirmDialog";
 import { QuitConfirmDialog } from "~/components/QuitConfirmDialog";
 import { Button } from "~/components/ui/button";
 import { task } from "~/../wailsjs/go/models";
-import { EventsOn, EventsOff, Quit, Hide } from "~/../wailsjs/runtime/runtime";
+import { EventsOn, EventsOff, EventsEmit, Hide } from "~/../wailsjs/runtime/runtime";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -133,13 +133,13 @@ export default function App() {
     setTaskToDelete(id);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (deleteFiles: boolean) => {
     const id = taskToDelete();
     if (!id) return;
 
     setIsDeleting(true);
     try {
-      await DeleteTask(id);
+      await DeleteTask(id, deleteFiles);
       // Optimistic removal from local state after backend confirms
       setTasks(tasks().filter((t) => t.id !== id));
       setTaskToDelete(null);
@@ -151,7 +151,7 @@ export default function App() {
   };
 
   const handleQuit = () => {
-    Quit();
+    EventsEmit("app:force-quit");
   };
 
   const handleBackground = () => {
@@ -267,7 +267,7 @@ export default function App() {
             <Plus class="h-3.5 w-3.5" />
             <span>New Task</span>
           </Button>
-          <Button
+          {/* <Button
             size="sm"
             variant="outline"
             class="h-7 px-2.5 text-xs border border-border bg-background text-foreground rounded hover:bg-muted flex items-center space-x-1"
@@ -282,7 +282,7 @@ export default function App() {
           >
             <Play class="h-3.5 w-3.5 text-muted-foreground" />
             <span>Resume All</span>
-          </Button>
+          </Button> */}
         </div>
         <div class="relative">
           <Search class="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/80" />

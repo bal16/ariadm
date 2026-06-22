@@ -3,6 +3,7 @@ package task
 import (
 	"ariadm/internal/domain/config"
 	"errors"
+	"os"
 	"regexp"
 	"time"
 )
@@ -93,13 +94,27 @@ func (s *TaskService) GetAllTasks() ([]*Task, error) {
 	return s.taskRepo.GetAll()
 }
 
-// DeleteTask removes a download from both aria2c's queue and the local SQLite database.
-// It uses aria2.remove for in-progress tasks and aria2.removeDownloadResult for finished ones.
-func (s *TaskService) DeleteTask(id string) error {
-	// 1. Fetch the current task to know its GID and status
+// DeleteTask removes the task from the database, tells aria2c to drop it, and optionally deletes physical files
+func (s *TaskService) DeleteTask(id string, deleteFiles bool) error {
 	t, err := s.taskRepo.GetByID(id)
 	if err != nil {
 		return err
+	}
+
+	// 1. If physical deletion is requested, try to get the file paths before removing from aria2c
+	var filesToDelete []string
+	if deleteFiles {
+		live, err := s.engine.TellStatus(t.GID)
+		if err == nil && len(live.Files) > 0 {
+			// aria2c knows about the files
+			filesToDelete = live.Files
+		} else if t.FileName != "" {
+			// fallback: guess the path based on the default config if aria2c forgot it
+			if cfg, err := s.configRepo.Load(); err == nil {
+				importPath := cfg.DefaultDownloadPath + "/" + t.FileName
+				filesToDelete = []string{importPath}
+			}
+		}
 	}
 
 	// 2. Notify aria2c to drop the download — ignore errors if the daemon
@@ -113,7 +128,14 @@ func (s *TaskService) DeleteTask(id string) error {
 		_ = s.engine.RemoveDownloadResult(t.GID)
 	}
 
-	// 3. Always delete from SQLite regardless of aria2c's response
+	// 3. Perform physical deletion if requested
+	if deleteFiles {
+		for _, f := range filesToDelete {
+			_ = os.Remove(f)
+		}
+	}
+
+	// 4. Always delete from SQLite regardless of aria2c's response
 	return s.taskRepo.Delete(id)
 }
 

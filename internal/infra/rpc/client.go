@@ -163,8 +163,16 @@ func (c *Aria2Client) TellStatus(gid string) (*task.Aria2Status, error) {
 
 	// Extract just the base filename from the full filesystem path
 	fileName := ""
-	if len(raw.Files) > 0 && raw.Files[0].Path != "" {
-		fileName = filepath.Base(raw.Files[0].Path)
+	var filePaths []string
+	if len(raw.Files) > 0 {
+		for _, f := range raw.Files {
+			if f.Path != "" {
+				filePaths = append(filePaths, f.Path)
+			}
+		}
+		if len(filePaths) > 0 {
+			fileName = filepath.Base(filePaths[0])
+		}
 	}
 
 	return &task.Aria2Status{
@@ -174,6 +182,7 @@ func (c *Aria2Client) TellStatus(gid string) (*task.Aria2Status, error) {
 		CompletedLength: parseI64(raw.CompletedLength),
 		DownloadSpeed:   parseI64(raw.DownloadSpeed),
 		FileName:        fileName,
+		Files:           filePaths,
 	}, nil
 }
 

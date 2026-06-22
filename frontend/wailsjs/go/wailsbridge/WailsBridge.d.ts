@@ -4,7 +4,7 @@ import {config} from '../models';
 import {task} from '../models';
 import {context} from '../models';
 
-export function DeleteTask(arg1:string):Promise<void>;
+export function DeleteTask(arg1:string,arg2:boolean):Promise<void>;
 
 export function GetApplicationConfig():Promise<config.AppConfig>;
 

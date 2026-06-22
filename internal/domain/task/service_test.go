@@ -212,7 +212,7 @@ func TestDeleteTask_ActiveTask(t *testing.T) {
 	taskRepo.On("Delete", taskID).Return(nil)
 
 	service := task.NewTaskService(taskRepo, engine, configRepo)
-	err := service.DeleteTask(taskID)
+	err := service.DeleteTask(taskID, false)
 
 	assert.NoError(t, err)
 	taskRepo.AssertExpectations(t)
@@ -237,7 +237,7 @@ func TestDeleteTask_CompletedTask(t *testing.T) {
 	taskRepo.On("Delete", taskID).Return(nil)
 
 	service := task.NewTaskService(taskRepo, engine, configRepo)
-	err := service.DeleteTask(taskID)
+	err := service.DeleteTask(taskID, false)
 
 	assert.NoError(t, err)
 	taskRepo.AssertExpectations(t)
