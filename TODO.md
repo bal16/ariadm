@@ -94,4 +94,4 @@ _Target: Connect the domain interfaces to concrete databases, local files, and s
 _Target: Prepare the backend to intercept commands from both the browser extension and the Wails frontend._
 
 - [x] **Task 4.1 (Local HTTP Server):** Build a lightweight REST API server using Go’s built-in `net/http` package to catch download links forwarded by the browser extension (Chrome/Firefox).
-- [ ] **Task 4.2 (Wails Bridge Controller):** Create `ingress/wailsbridge/controller.go`. This file will expose clean, decoupled methods wrapping `TaskService` and `ConfigService` so Wails can bind them directly to the frontend.
+- [x] **Task 4.2 (Wails Bridge Controller):** Create `ingress/wailsbridge/controller.go`. This file will expose clean, decoupled methods wrapping `TaskService` and `ConfigService` so Wails can bind them directly to the frontend.
