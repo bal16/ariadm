@@ -4,6 +4,8 @@ Here is the updated **Task / To-Do List** for your download manager project, tra
 
 ---
 
+## PROJECT SETUP AND BACKEND PHASE
+
 ### 📋 PHASE 0: Project Setup & Environment (Foundation)
 
 _Target: Project structure initialized and ready to compile test suites._
@@ -96,3 +98,27 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 
 - [x] **Task 4.1 (Local HTTP Server):** Build a lightweight REST API server using Go’s built-in `net/http` package to catch download links forwarded by the browser extension (Chrome/Firefox).
 - [x] **Task 4.2 (Wails Bridge Controller):** Create `ingress/wailsbridge/controller.go`. This file will expose clean, decoupled methods wrapping `TaskService` and `ConfigService` so Wails can bind them directly to the frontend.
+
+---
+
+### FRONTEND & UI INTEGRATION PHASE
+
+#### 🎨 PHASE 5: Frontend Setup & Styling (UI Foundation)
+
+- [ ] **Task 5.1:** Sync child compilation workspaces inside the `frontend/` directory.
+- [ ] **Task 5.2:** Set up stable Tailwind v3 compiler + PostCSS asset processing pipelines.
+- [ ] **Task 5.3:** Resolve TypeScript solution-style compiler path alias mappings (`~/*`).
+- [ ] **Task 5.4:** Verify wails dev successfully generates types and maps models (ignoring standard time.Time log output)
+
+#### 🎛️ PHASE 6: UI Components & Data Binding (Wiring the Controls)
+
+- [ ] **Task 6.1 (Settings Screen):** Build a dedicated settings panel/modal. Bind its inputs to `GetApplicationConfig` and `SaveApplicationConfig` exposed by the `WailsBridge`.
+- [ ] **Task 6.2 (Add Task Dialog):** Design a clean URL input modal to accept new downloads. Link the submission handler to your backend `TriggerNewDownload` method.
+- [ ] **Task 6.3 (Download List Component):** Create a robust task dashboard row displaying the file name, sizes, a progress bar (static for now), and control buttons that fire off `ToggleTaskPauseState`.
+
+#### ⚡ PHASE 7: Real-Time Progress Synchronization (State Update Loop)
+
+- [ ] **Task 7.1 (Backend Ticker):** Setup a background goroutine loop in Go (using `time.Ticker` firing every 500ms) that queries `aria2.tellActive` and broadcasts active progress map blocks down to the window using **Wails Events** (`wails.EventsEmit`).
+- [ ] **Task 7.2 (Frontend Listener):** Wire up a global event hook inside SolidJS (`wails.EventsOn`) to catch the incoming stream payloads and feed them straight into reactive SolidJS _Signals_ for fine-grained DOM manipulation.
+
+---
