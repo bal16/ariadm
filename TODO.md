@@ -105,10 +105,10 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 
 #### 🎨 PHASE 5: Frontend Setup & Styling (UI Foundation)
 
-- [ ] **Task 5.1:** Sync child compilation workspaces inside the `frontend/` directory.
-- [ ] **Task 5.2:** Set up stable Tailwind v3 compiler + PostCSS asset processing pipelines.
-- [ ] **Task 5.3:** Resolve TypeScript solution-style compiler path alias mappings (`~/*`).
-- [ ] **Task 5.4:** Verify wails dev successfully generates types and maps models (ignoring standard time.Time log output)
+- [x] **Task 5.1:** Sync child compilation workspaces inside the `frontend/` directory.
+- [x] **Task 5.2:** Set up stable Tailwind v3 compiler + PostCSS asset processing pipelines.
+- [x] **Task 5.3:** Resolve TypeScript solution-style compiler path alias mappings (`~/*`).
+- [x] **Task 5.4:** Verify wails dev successfully generates types and maps models (ignoring standard time.Time log output)
 
 #### 🎛️ PHASE 6: UI Components & Data Binding (Wiring the Controls)
 
