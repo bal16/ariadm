@@ -1,6 +1,7 @@
-package config
+package config_test
 
 import (
+	"ariadm/internal/domain/config"
 	"errors"
 	"testing"
 
@@ -13,15 +14,15 @@ type ConfigRepositoryMock struct {
 	mock.Mock
 }
 
-func (m *ConfigRepositoryMock) Load() (*AppConfig, error) {
+func (m *ConfigRepositoryMock) Load() (*config.AppConfig, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*AppConfig), args.Error(1)
+	return args.Get(0).(*config.AppConfig), args.Error(1)
 }
 
-func (m *ConfigRepositoryMock) Save(cfg *AppConfig) error {
+func (m *ConfigRepositoryMock) Save(cfg *config.AppConfig) error {
 	args := m.Called(cfg)
 	return args.Error(0)
 }
@@ -40,12 +41,12 @@ func TestGetConfig_Success(t *testing.T) {
 	repoMock := new(ConfigRepositoryMock)
 	engineMock := new(EngineClientMock)
 
-	dummyConfig := &AppConfig{DefaultDownloadPath: "/downloads/test"}
+	dummyConfig := &config.AppConfig{DefaultDownloadPath: "/downloads/test"}
 
 	// Define behavior: When Load is called, return dummyConfig and nil error
 	repoMock.On("Load").Return(dummyConfig, nil)
 
-	service := NewConfigService(repoMock, engineMock)
+	service := config.NewConfigService(repoMock, engineMock)
 	res, err := service.GetConfig()
 
 	assert.NoError(t, err)
@@ -60,7 +61,7 @@ func TestGetConfig_FallbackToDefault(t *testing.T) {
 	// Simulate repository returning an error
 	repoMock.On("Load").Return(nil, errors.New("file not found"))
 
-	service := NewConfigService(repoMock, engineMock)
+	service := config.NewConfigService(repoMock, engineMock)
 	res, err := service.GetConfig()
 
 	assert.NoError(t, err)                     // Service should NOT crash; it should handle it gracefully
@@ -72,7 +73,7 @@ func TestUpdateSettings_Success(t *testing.T) {
 	repoMock := new(ConfigRepositoryMock)
 	engineMock := new(EngineClientMock)
 
-	newConfig := &AppConfig{
+	newConfig := &config.AppConfig{
 		DefaultDownloadPath: "/new/path",
 		SpeedLimit:          512000, // 500 KB/s
 		MaxConcurrentTasks:  5,
@@ -88,7 +89,7 @@ func TestUpdateSettings_Success(t *testing.T) {
 	}
 	engineMock.On("ChangeGlobalOption", expectedOptions).Return(nil)
 
-	service := NewConfigService(repoMock, engineMock)
+	service := config.NewConfigService(repoMock, engineMock)
 	err := service.UpdateSettings(newConfig)
 
 	assert.NoError(t, err)

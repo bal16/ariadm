@@ -1,7 +1,8 @@
-package task
+package task_test
 
 import (
 	"ariadm/internal/domain/config"
+	"ariadm/internal/domain/task"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,16 +12,16 @@ import (
 // 1. Manual Mocks
 type TaskRepositoryMock struct{ mock.Mock }
 
-func (m *TaskRepositoryMock) Create(t *Task) error { return m.Called(t).Error(0) }
-func (m *TaskRepositoryMock) GetByID(id string) (*Task, error) {
+func (m *TaskRepositoryMock) Create(t *task.Task) error { return m.Called(t).Error(0) }
+func (m *TaskRepositoryMock) GetByID(id string) (*task.Task, error) {
 	args := m.Called(id)
-	return args.Get(0).(*Task), args.Error(1)
+	return args.Get(0).(*task.Task), args.Error(1)
 }
-func (m *TaskRepositoryMock) GetByGID(gid string) (*Task, error) {
+func (m *TaskRepositoryMock) GetByGID(gid string) (*task.Task, error) {
 	args := m.Called(gid)
-	return args.Get(0).(*Task), args.Error(1)
+	return args.Get(0).(*task.Task), args.Error(1)
 }
-func (m *TaskRepositoryMock) Update(t *Task) error { return m.Called(t).Error(0) }
+func (m *TaskRepositoryMock) Update(t *task.Task) error { return m.Called(t).Error(0) }
 
 type DownloadEngineMock struct{ mock.Mock }
 
@@ -54,11 +55,11 @@ func TestDownloadFile_Success(t *testing.T) {
 	engine.On("AddURI", targetURL, "/downloads").Return(expectedGID, nil)
 
 	// We check if it attempts to save a task with correct properties to the DB
-	taskRepo.On("Create", mock.MatchedBy(func(t *Task) bool {
-		return t.URL == targetURL && t.GID == expectedGID && t.Status == StatusDownloading
+	taskRepo.On("Create", mock.MatchedBy(func(t *task.Task) bool {
+		return t.URL == targetURL && t.GID == expectedGID && t.Status == task.StatusDownloading
 	})).Return(nil)
 
-	service := NewTaskService(taskRepo, engine, configRepo)
+	service := task.NewTaskService(taskRepo, engine, configRepo)
 	res, err := service.DownloadFile(targetURL)
 
 	assert.NoError(t, err)
@@ -77,7 +78,7 @@ func TestDownloadFile_InvalidURL(t *testing.T) {
 
 	invalidURL := "ftp-malformed://missing-proper-structure"
 
-	service := NewTaskService(taskRepo, engine, configRepo)
+	service := task.NewTaskService(taskRepo, engine, configRepo)
 	res, err := service.DownloadFile(invalidURL)
 
 	// Assertions
@@ -101,10 +102,10 @@ func TestTogglePauseTask_ToPaused(t *testing.T) {
 	taskID := "local_123"
 	aria2GID := "aria2_123"
 
-	existingTask := &Task{
+	existingTask := &task.Task{
 		ID:     taskID,
 		GID:    aria2GID,
-		Status: StatusDownloading,
+		Status: task.StatusDownloading,
 	}
 
 	// 1. Expect service to fetch the current task state
@@ -114,11 +115,11 @@ func TestTogglePauseTask_ToPaused(t *testing.T) {
 	engine.On("Pause", aria2GID).Return(nil)
 
 	// 3. Expect database to store the updated "paused" status
-	taskRepo.On("Update", mock.MatchedBy(func(t *Task) bool {
-		return t.ID == taskID && t.Status == StatusPaused
+	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == taskID && t.Status == task.StatusPaused
 	})).Return(nil)
 
-	service := NewTaskService(taskRepo, engine, configRepo)
+	service := task.NewTaskService(taskRepo, engine, configRepo)
 
 	// --- THIS WILL CAUSE A COMPILE ERROR (RED) ---
 	// TogglePauseTask does not exist yet
@@ -137,19 +138,19 @@ func TestTogglePauseTask_ToResume(t *testing.T) {
 	taskID := "local_456"
 	aria2GID := "aria2_456"
 
-	existingTask := &Task{
+	existingTask := &task.Task{
 		ID:     taskID,
 		GID:    aria2GID,
-		Status: StatusPaused,
+		Status: task.StatusPaused,
 	}
 
 	taskRepo.On("GetByID", taskID).Return(existingTask, nil)
 	engine.On("Unpause", aria2GID).Return(nil) // Should call Unpause when currently Paused
-	taskRepo.On("Update", mock.MatchedBy(func(t *Task) bool {
-		return t.ID == taskID && t.Status == StatusDownloading
+	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == taskID && t.Status == task.StatusDownloading
 	})).Return(nil)
 
-	service := NewTaskService(taskRepo, engine, configRepo)
+	service := task.NewTaskService(taskRepo, engine, configRepo)
 	err := service.TogglePauseTask(taskID)
 	assert.NoError(t, err)
 }
@@ -160,11 +161,11 @@ func TestTogglePauseTask_InvalidState(t *testing.T) {
 	configRepo := new(ConfigRepositoryMock)
 
 	taskID := "local_789"
-	existingTask := &Task{ID: taskID, Status: StatusCompleted}
+	existingTask := &task.Task{ID: taskID, Status: task.StatusCompleted}
 
 	taskRepo.On("GetByID", taskID).Return(existingTask, nil)
 
-	service := NewTaskService(taskRepo, engine, configRepo)
+	service := task.NewTaskService(taskRepo, engine, configRepo)
 	err := service.TogglePauseTask(taskID)
 
 	assert.Error(t, err)
