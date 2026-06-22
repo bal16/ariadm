@@ -7,6 +7,7 @@ import (
 	"ariadm/internal/infra/rpc"
 	"ariadm/internal/ingress/httpserver"
 	"ariadm/internal/ingress/wailsbridge"
+	"context"
 	"embed"
 	"log"
 
@@ -64,7 +65,11 @@ func main() {
 		},
 		// BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 255},
-		OnStartup:        app.OnStartup,
+		// OnStartup:        app.OnStartup,
+		OnStartup: func(ctx context.Context) {
+			app.OnStartup(ctx)    // 1. Fire up your aria2c daemon engine first
+			bridge.OnStartup(ctx) // 2. Pass context to the bridge to launch the telemetry ticker
+		},
 		Bind: []interface{}{
 			app,
 			bridge,

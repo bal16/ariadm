@@ -43,6 +43,11 @@ func (b *WailsBridge) ToggleTaskPauseState(taskID string) error {
 	return b.taskService.TogglePauseTask(taskID)
 }
 
+// DeleteTask removes a download from aria2c's queue and wipes its record from the local database
+func (b *WailsBridge) DeleteTask(taskID string) error {
+	return b.taskService.DeleteTask(taskID)
+}
+
 // OnStartup is invoked automatically by the Wails runtime engine engine
 func (b *WailsBridge) OnStartup(ctx context.Context) {
 	b.ctx = ctx

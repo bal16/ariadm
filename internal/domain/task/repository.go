@@ -7,6 +7,7 @@ type TaskRepository interface {
 	GetByGID(gid string) (*Task, error)
 	Update(t *Task) error
 	GetAll() ([]*Task, error)
+	Delete(id string) error
 }
 
 // Aria2Status is the live progress snapshot returned by aria2c for a single download
@@ -24,5 +25,7 @@ type DownloadEngine interface {
 	AddURI(url string, downloadPath string) (string, error) // Returns GID
 	Pause(gid string) error
 	Unpause(gid string) error
-	TellStatus(gid string) (*Aria2Status, error) // Fetch live progress snapshot for one GID
+	TellStatus(gid string) (*Aria2Status, error)        // Fetch live progress snapshot for one GID
+	Remove(gid string) error                             // Stop and remove an active/paused/waiting download
+	RemoveDownloadResult(gid string) error               // Purge a completed/error/removed entry from aria2c's memory
 }

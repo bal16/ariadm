@@ -22,6 +22,7 @@ func (m *TaskRepositoryMock) GetByGID(gid string) (*task.Task, error) {
 	return args.Get(0).(*task.Task), args.Error(1)
 }
 func (m *TaskRepositoryMock) Update(t *task.Task) error { return m.Called(t).Error(0) }
+func (m *TaskRepositoryMock) Delete(id string) error   { return m.Called(id).Error(0) }
 
 type DownloadEngineMock struct{ mock.Mock }
 
@@ -31,6 +32,10 @@ func (m *DownloadEngineMock) AddURI(url, path string) (string, error) {
 }
 func (m *DownloadEngineMock) Pause(gid string) error   { return m.Called(gid).Error(0) }
 func (m *DownloadEngineMock) Unpause(gid string) error { return m.Called(gid).Error(0) }
+func (m *DownloadEngineMock) Remove(gid string) error  { return m.Called(gid).Error(0) }
+func (m *DownloadEngineMock) RemoveDownloadResult(gid string) error {
+	return m.Called(gid).Error(0)
+}
 func (m *DownloadEngineMock) TellStatus(gid string) (*task.Aria2Status, error) {
 	args := m.Called(gid)
 	if args.Get(0) == nil {
@@ -189,4 +194,54 @@ func TestTogglePauseTask_InvalidState(t *testing.T) {
 	// Engine and Update should NEVER be touched for completed items
 	engine.AssertNotCalled(t, "Pause", mock.Anything)
 	taskRepo.AssertNotCalled(t, "Update", mock.Anything)
+}
+
+func TestDeleteTask_ActiveTask(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	taskID := "local_del_active"
+	gid := "aria2_del_active"
+
+	existingTask := &task.Task{ID: taskID, GID: gid, Status: task.StatusActive}
+
+	// Service must: fetch the task, call aria2.remove, then delete from SQLite
+	taskRepo.On("GetByID", taskID).Return(existingTask, nil)
+	engine.On("Remove", gid).Return(nil)
+	taskRepo.On("Delete", taskID).Return(nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.DeleteTask(taskID)
+
+	assert.NoError(t, err)
+	taskRepo.AssertExpectations(t)
+	engine.AssertExpectations(t)
+	// RemoveDownloadResult must NOT be called for an active task
+	engine.AssertNotCalled(t, "RemoveDownloadResult", mock.Anything)
+}
+
+func TestDeleteTask_CompletedTask(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	taskID := "local_del_complete"
+	gid := "aria2_del_complete"
+
+	existingTask := &task.Task{ID: taskID, GID: gid, Status: task.StatusCompleted}
+
+	// Service must: fetch the task, call aria2.removeDownloadResult, then delete from SQLite
+	taskRepo.On("GetByID", taskID).Return(existingTask, nil)
+	engine.On("RemoveDownloadResult", gid).Return(nil)
+	taskRepo.On("Delete", taskID).Return(nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.DeleteTask(taskID)
+
+	assert.NoError(t, err)
+	taskRepo.AssertExpectations(t)
+	engine.AssertExpectations(t)
+	// Remove must NOT be called for a completed task
+	engine.AssertNotCalled(t, "Remove", mock.Anything)
 }

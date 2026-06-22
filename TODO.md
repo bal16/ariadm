@@ -118,7 +118,13 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 
 #### ⚡ PHASE 7: Real-Time Progress Synchronization (State Update Loop)
 
-- [ ] **Task 7.1 (Backend Ticker):** Setup a background goroutine loop in Go (using `time.Ticker` firing every 500ms) that queries `aria2.tellActive` and broadcasts active progress map blocks down to the window using **Wails Events** (`wails.EventsEmit`).
-- [ ] **Task 7.2 (Frontend Listener):** Wire up a global event hook inside SolidJS (`wails.EventsOn`) to catch the incoming stream payloads and feed them straight into reactive SolidJS _Signals_ for fine-grained DOM manipulation.
+- [x] **Task 7.1 (Backend Ticker):** Setup a background goroutine loop in Go (using `time.Ticker` firing every 500ms) that queries `aria2.tellActive` and broadcasts active progress map blocks down to the window using **Wails Events** (`wails.EventsEmit`).
+- [x] **Task 7.2 (Frontend Listener):** Wire up a global event hook inside SolidJS (`wails.EventsOn`) to catch the incoming stream payloads and feed them straight into reactive SolidJS _Signals_ for fine-grained DOM manipulation.
+
+---
+
+#### 🗑️ PHASE 8: Task Management (Delete & Cleanup)
+
+- [x] **Task 8.1 (Delete Task):** Implement full delete pipeline — `TaskRepository.Delete`, `aria2.remove` for active/paused tasks, `aria2.removeDownloadResult` for completed/errored entries, `WailsBridge.DeleteTask` exposed to Wails, and frontend `handleDelete` wired to the real backend call.
 
 ---

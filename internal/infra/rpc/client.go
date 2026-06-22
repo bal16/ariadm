@@ -120,6 +120,18 @@ func (c *Aria2Client) ChangeGlobalOption(options map[string]string) error {
 	return err
 }
 
+// Remove stops and removes an active, paused, or waiting download from aria2c's queue
+func (c *Aria2Client) Remove(gid string) error {
+	_, err := c.call("aria2.remove", []interface{}{gid})
+	return err
+}
+
+// RemoveDownloadResult purges a completed, error, or removed entry from aria2c's in-memory result list
+func (c *Aria2Client) RemoveDownloadResult(gid string) error {
+	_, err := c.call("aria2.removeDownloadResult", []interface{}{gid})
+	return err
+}
+
 // TellStatus fetches a live progress snapshot from aria2c for a single GID
 func (c *Aria2Client) TellStatus(gid string) (*task.Aria2Status, error) {
 	// Request only the fields we need to avoid oversized payloads

@@ -93,6 +93,30 @@ func (s *TaskService) GetAllTasks() ([]*Task, error) {
 	return s.taskRepo.GetAll()
 }
 
+// DeleteTask removes a download from both aria2c's queue and the local SQLite database.
+// It uses aria2.remove for in-progress tasks and aria2.removeDownloadResult for finished ones.
+func (s *TaskService) DeleteTask(id string) error {
+	// 1. Fetch the current task to know its GID and status
+	t, err := s.taskRepo.GetByID(id)
+	if err != nil {
+		return err
+	}
+
+	// 2. Notify aria2c to drop the download — ignore errors if the daemon
+	//    was restarted and no longer knows about this GID.
+	switch t.Status {
+	case StatusActive, StatusWaiting, StatusPaused:
+		// Still in aria2c's active queue: force-stop and remove it
+		_ = s.engine.Remove(t.GID)
+	case StatusCompleted, StatusError:
+		// In aria2c's result list: purge the finished entry from memory
+		_ = s.engine.RemoveDownloadResult(t.GID)
+	}
+
+	// 3. Always delete from SQLite regardless of aria2c's response
+	return s.taskRepo.Delete(id)
+}
+
 // SyncAndGetAllTasks fetches every task from the database, enriches each one with
 // a live aria2c TellStatus call, persists any changed fields, then returns the
 // updated list. The telemetry loop in the Wails bridge calls this every 500 ms.

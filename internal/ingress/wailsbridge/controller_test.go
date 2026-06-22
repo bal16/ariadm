@@ -23,6 +23,10 @@ func (m *MockDownloadEngine) AddURI(url, path string) (string, error) {
 }
 func (m *MockDownloadEngine) Pause(gid string) error   { return m.Called(gid).Error(0) }
 func (m *MockDownloadEngine) Unpause(gid string) error { return m.Called(gid).Error(0) }
+func (m *MockDownloadEngine) Remove(gid string) error  { return m.Called(gid).Error(0) }
+func (m *MockDownloadEngine) RemoveDownloadResult(gid string) error {
+	return m.Called(gid).Error(0)
+}
 func (m *MockDownloadEngine) TellStatus(gid string) (*task.Aria2Status, error) {
 	args := m.Called(gid)
 	if args.Get(0) == nil {

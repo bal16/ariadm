@@ -140,3 +140,9 @@ func (r *SQLiteTaskRepository) GetAll() ([]*task.Task, error) {
 
 	return tasks, nil
 }
+
+// Delete removes a task record from SQLite by its internal application ID
+func (r *SQLiteTaskRepository) Delete(id string) error {
+	_, err := r.db.Exec(`DELETE FROM tasks WHERE id = ?`, id)
+	return err
+}

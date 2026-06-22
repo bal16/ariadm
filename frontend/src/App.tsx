@@ -24,6 +24,7 @@ import {
 import {
   ToggleTaskPauseState,
   GetTasks,
+  DeleteTask,
 } from "~/../wailsjs/go/wailsbridge/WailsBridge";
 
 export default function App() {
@@ -94,9 +95,14 @@ export default function App() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    // Handled in a future task by repository drop utilities
-    setTasks(tasks().filter((t) => t.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await DeleteTask(id);
+      // Optimistic removal from local state after backend confirms
+      setTasks(tasks().filter((t) => t.id !== id));
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+    }
   };
 
   return (
