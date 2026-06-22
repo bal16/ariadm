@@ -1,4 +1,5 @@
 import { createSignal, onMount, onCleanup, Show } from "solid-js";
+import { createStore, reconcile } from "solid-js/store";
 import { useColorMode } from "@kobalte/core";
 import {
   Plus,
@@ -20,7 +21,12 @@ import { DeleteConfirmDialog } from "~/components/DeleteConfirmDialog";
 import { QuitConfirmDialog } from "~/components/QuitConfirmDialog";
 import { Button } from "~/components/ui/button";
 import { task } from "~/../wailsjs/go/models";
-import { EventsOn, EventsOff, EventsEmit, Hide } from "~/../wailsjs/runtime/runtime";
+import {
+  EventsOn,
+  EventsOff,
+  EventsEmit,
+  Hide,
+} from "~/../wailsjs/runtime/runtime";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,9 +48,9 @@ export default function App() {
   const [taskToDelete, setTaskToDelete] = createSignal<string | null>(null);
   const [isDeleting, setIsDeleting] = createSignal(false);
   const [engineStatus, setEngineStatus] = createSignal("Connecting");
-  const [tasks, setTasks] = createSignal<task.Task[]>([]);
+  const [tasks, setTasks] = createStore<task.Task[]>([]);
   const [themePref, setThemePref] = createSignal(
-    localStorage.getItem("ariadm-theme") || "system"
+    localStorage.getItem("ariadm-theme") || "system",
   );
 
   const handleThemeChange = (theme: "light" | "dark" | "system") => {
@@ -54,7 +60,7 @@ export default function App() {
 
   // Calculate live cumulative download speeds from active tasks
   const totalDownloadSpeed = () => {
-    return tasks().reduce(
+    return tasks.reduce(
       (acc, t) => acc + (t.status === "active" ? t.speed : 0),
       0,
     );
@@ -90,8 +96,8 @@ export default function App() {
         setTasks([]);
         return;
       }
-      const parsedTasks = incomingData.map((t) => task.Task.createFrom(t));
-      setTasks(parsedTasks);
+
+      setTasks(reconcile(incomingData, { key: "id" }));
     });
 
     EventsOn("engine:status", (status: string) => {
@@ -140,8 +146,8 @@ export default function App() {
     setIsDeleting(true);
     try {
       await DeleteTask(id, deleteFiles);
-      // Optimistic removal from local state after backend confirms
-      setTasks(tasks().filter((t) => t.id !== id));
+
+      setTasks((prev) => prev.filter((t) => t.id !== id));
       setTaskToDelete(null);
     } catch (err) {
       console.error("Failed to delete task:", err);
@@ -297,7 +303,7 @@ export default function App() {
       {/* 3. Central Application Queue Workspace Area */}
       <div class="flex-1 p-2 bg-background/50 overflow-hidden">
         <DownloadList
-          tasks={tasks()}
+          tasks={tasks}
           onTogglePause={handleTogglePause}
           onDelete={handleDelete}
         />
@@ -319,13 +325,9 @@ export default function App() {
         </div>
         <div class="flex items-center space-x-4">
           <span class="text-foreground flex items-center space-x-1">
-            <Download class="h-3 w-3 rotate-180 text-muted-foreground/70" />
-            {/* 👇 Live reactive download speed tracker accumulation */}
-            <span>⬇️ {formatGlobalSpeed(totalDownloadSpeed())}</span>
-          </span>
-          <span class="text-foreground flex items-center space-x-1">
             <Download class="h-3 w-3 text-muted-foreground/70" />
-            <span>⬆️ 0.00 B/s</span>
+            {/* 👇 Live reactive download speed tracker accumulation */}
+            <span>{formatGlobalSpeed(totalDownloadSpeed())}</span>
           </span>
         </div>
       </div>
