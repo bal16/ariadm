@@ -3,15 +3,21 @@ package wailsbridge
 import (
 	"ariadm/internal/domain/config"
 	"ariadm/internal/domain/task"
+	"context"
+	"time"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type WailsBridge struct {
+	ctx           context.Context
 	configService *config.ConfigService
 	taskService   *task.TaskService
 }
 
 func NewWailsBridge(cs *config.ConfigService, ts *task.TaskService) *WailsBridge {
 	return &WailsBridge{
+		ctx:           context.Background(),
 		configService: cs,
 		taskService:   ts,
 	}
@@ -35,4 +41,38 @@ func (b *WailsBridge) TriggerNewDownload(url string) (*task.Task, error) {
 // ToggleTaskPauseState flips the network engine status for a single task queue item
 func (b *WailsBridge) ToggleTaskPauseState(taskID string) error {
 	return b.taskService.TogglePauseTask(taskID)
+}
+
+// OnStartup is invoked automatically by the Wails runtime engine engine
+func (b *WailsBridge) OnStartup(ctx context.Context) {
+	b.ctx = ctx
+	go b.startTelemetryLoop() // 👈 Spin up the concurrent background engine ticker
+}
+
+func (b *WailsBridge) startTelemetryLoop() {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-b.ctx.Done():
+			return
+		case <-ticker.C:
+			// Fetch fresh tasks and sync live aria2c progress data into SQLite
+			tasks, err := b.taskService.SyncAndGetAllTasks()
+			if err != nil {
+				runtime.EventsEmit(b.ctx, "engine:status", "disconnected")
+				continue
+			}
+
+			// Broadcast live array bursts straight onto the SolidJS frontend
+			runtime.EventsEmit(b.ctx, "tasks:update", tasks)
+			runtime.EventsEmit(b.ctx, "engine:status", "running")
+		}
+	}
+}
+
+// GetTasks queries, enriches with live aria2c data, and returns all task records
+func (b *WailsBridge) GetTasks() ([]*task.Task, error) {
+	return b.taskService.SyncAndGetAllTasks()
 }
