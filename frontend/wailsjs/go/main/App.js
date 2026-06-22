@@ -5,3 +5,7 @@
 export function OnShutdown(arg1) {
   return window['go']['main']['App']['OnShutdown'](arg1);
 }
+
+export function OnStartup(arg1) {
+  return window['go']['main']['App']['OnStartup'](arg1);
+}
