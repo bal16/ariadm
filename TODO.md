@@ -83,7 +83,7 @@ _Target: Handle the download queue logic, link validation, and task control comm
 _Target: Connect the domain interfaces to concrete databases, local files, and system processes._
 
 - [x] **Task 3.1 (Daemon Manager):** Implement `os/exec` logic in `infrastructure/daemon/` to safely _start/stop_ the headless `aria2c` process in the background.
-- [ ] **Task 3.2 (JSON Config Repo):** Implement `JSONConfigRepository` to read and write the `config.json` file inside the OS-specific AppData/Config folder.
+- [x] **Task 3.2 (JSON Config Repo):** Implement `JSONConfigRepository` to read and write the `config.json` file inside the OS-specific AppData/Config folder.
 - [ ] **Task 3.3 (SQLite Repo):** Implement `SQLiteRepository` using a pure Go driver (`modernc.org/sqlite`) to store `Task` records permanently.
 - [ ] **Task 3.4 (RPC Client):** Implement the actual WebSocket client in `infrastructure/rpc/` to dispatch JSON-RPC commands to the `aria2c` port (6800).
 
