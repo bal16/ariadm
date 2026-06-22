@@ -1,32 +1,50 @@
-// frontend/src/App.tsx
 import { createSignal, Show } from "solid-js";
-import { Preferences } from "~/components/Preferences";
-import { Button } from "~/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuShortcut,
-} from "~/components/ui/dropdown-menu";
 import {
   Plus,
   Pause,
   Play,
   Search,
   Settings,
-  Download,
-  LogOut,
-  FileText,
-  Trash2,
   Activity,
+  Download,
 } from "lucide-solid";
-import { AddTaskDialog } from "./components/AddTaskDialog";
+import { Preferences } from "~/components/Preferences";
+import { AddTaskDialog } from "~/components/AddTaskDialog";
+import { DownloadList } from "~/components/DownloadList";
+import { Button } from "~/components/ui/button";
+import { task } from "~/../wailsjs/go/models";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuShortcut,
+} from "~/components/ui/dropdown-menu";
 
 export default function App() {
   const [showPrefs, setShowPrefs] = createSignal(false);
-  const [showAddTask, setShowAddTask] = createSignal(false); // 👈 Add visibility hook
+  const [showAddTask, setShowAddTask] = createSignal(false);
+
+  // 1. Wrap plain objects inside task.Task.createFrom() to satisfy the class blueprint
+  const [tasks, setTasks] = createSignal<task.Task[]>([]);
+
+  // 2. Ensure your mutation creates a proper class instance as well
+  const handleTogglePause = (id: string) => {
+    setTasks(
+      tasks().map((t) =>
+        t.id === id
+          ? task.Task.createFrom({
+              ...t,
+              status: t.status === "active" ? "paused" : "active",
+            })
+          : t,
+      ),
+    );
+  };
+
+  const handleDelete = (id: string) => {
+    setTasks(tasks().filter((t) => t.id !== id));
+  };
 
   return (
     <div class="h-screen w-screen flex flex-col overflow-hidden relative select-none bg-background text-foreground font-sans antialiased">
@@ -37,7 +55,6 @@ export default function App() {
           <span>AriaDM</span>
         </span>
 
-        {/* FILE MENU */}
         <DropdownMenu>
           <DropdownMenuTrigger
             as="button"
@@ -47,7 +64,7 @@ export default function App() {
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-44 bg-popover border border-border text-popover-foreground shadow-md">
             <DropdownMenuItem
-              onClick={() => setShowAddTask(true)} // 👈 Connect layout drop toggle
+              onClick={() => setShowAddTask(true)}
               class="text-xs font-medium cursor-pointer flex items-center space-x-2"
             >
               <Plus class="h-3.5 w-3.5 text-muted-foreground" />
@@ -56,42 +73,13 @@ export default function App() {
                 Ctrl+N
               </DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuSeparator class="border-t border-border" />
-            <DropdownMenuItem class="text-xs font-medium cursor-pointer text-destructive hover:bg-destructive/10 flex items-center space-x-2">
-              <LogOut class="h-3.5 w-3.5" />
-              <span>Exit</span>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* EDIT MENU */}
         <DropdownMenu>
           <DropdownMenuTrigger
             as="button"
             class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-none"
-          >
-            Edit
-          </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-44 bg-popover border border-border text-popover-foreground shadow-md">
-            <DropdownMenuItem class="text-xs font-medium cursor-pointer flex items-center space-x-2">
-              <FileText class="h-3.5 w-3.5 text-muted-foreground" />
-              <span class="flex-1">Select All</span>
-              <DropdownMenuShortcut class="font-mono text-[10px]">
-                Ctrl+A
-              </DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem class="text-xs font-medium cursor-pointer flex items-center space-x-2">
-              <Trash2 class="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Clear Completed</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* TOOLS MENU */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            as="button"
-            class="px-2 py-1 text-foreground font-semibold hover:bg-muted/60 rounded-sm transition-colors focus:outline-none"
           >
             Tools
           </DropdownMenuTrigger>
@@ -118,7 +106,7 @@ export default function App() {
       <div class="flex items-center justify-between p-2 border-b border-border bg-muted/10 z-30">
         <div class="flex items-center space-x-1.5">
           <Button
-            onClick={() => setShowAddTask(true)} // 👈 Connect secondary master button event trigger
+            onClick={() => setShowAddTask(true)}
             size="sm"
             class="h-7 px-2.5 text-xs bg-primary text-primary-foreground font-semibold rounded shadow-sm hover:opacity-90 flex items-center space-x-1"
           >
@@ -153,17 +141,15 @@ export default function App() {
       </div>
 
       {/* 3. Central Application Queue Workspace Area */}
-      <div class="flex-1 overflow-auto p-4 bg-background">
-        <div class="flex flex-col items-center justify-center h-full border border-dashed border-border rounded-lg bg-card/10 p-6 text-center">
-          <Download class="h-8 w-8 text-muted-foreground/40 mb-2" />
-          <div class="text-xs font-mono text-muted-foreground max-w-sm">
-            No active downloads. Intercept URLs from your browser extension or
-            click "New Task" to begin.
-          </div>
-        </div>
+      <div class="flex-1 p-2 bg-background/50 overflow-hidden">
+        <DownloadList
+          tasks={tasks()}
+          onTogglePause={handleTogglePause}
+          onDelete={handleDelete}
+        />
       </div>
 
-      {/* 4. Desktop Persistent System Status Footer Pin */}
+      {/* 4. Desktop System Status Footer Pin */}
       <div class="bg-muted/60 text-muted-foreground border-t border-border px-3 py-1 text-xs flex items-center justify-between font-mono select-none z-30">
         <div class="flex items-center space-x-4">
           <div class="flex items-center space-x-1.5">
@@ -175,22 +161,21 @@ export default function App() {
         </div>
         <div class="flex items-center space-x-4">
           <span class="text-foreground flex items-center space-x-1">
-            <Download class="h-3 w-3 rotate-180 text-muted-foreground" />
-            <span>⬇️ 0.00 B/s</span>
+            <Download class="h-3 w-3 rotate-180 text-muted-foreground/70" />
+            <span>⬇️ 18.42 MB/s</span>
           </span>
           <span class="text-foreground flex items-center space-x-1">
-            <Download class="h-3 w-3 text-muted-foreground" />
+            <Download class="h-3 w-3 text-muted-foreground/70" />
             <span>⬆️ 0.00 B/s</span>
           </span>
         </div>
       </div>
 
-      {/* Preferences Modal Mount Node */}
+      {/* Modal Layers */}
       <Show when={showPrefs()}>
         <Preferences onClose={() => setShowPrefs(false)} />
       </Show>
 
-      {/* Add Task Modal Mount Node 👈 Mount the layout frame injector conditional node */}
       <Show when={showAddTask()}>
         <AddTaskDialog onClose={() => setShowAddTask(false)} />
       </Show>
