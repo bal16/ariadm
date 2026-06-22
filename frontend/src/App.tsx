@@ -1,4 +1,5 @@
 import { createSignal, onMount, onCleanup, Show } from "solid-js";
+import { useColorMode } from "@kobalte/core";
 import {
   Plus,
   Pause,
@@ -7,6 +8,10 @@ import {
   Settings,
   Activity,
   Download,
+  Sun,
+  Moon,
+  Monitor,
+  Check,
 } from "lucide-solid";
 import { Preferences } from "~/components/Preferences";
 import { AddTaskDialog } from "~/components/AddTaskDialog";
@@ -30,6 +35,7 @@ import {
 } from "~/../wailsjs/go/wailsbridge/WailsBridge";
 
 export default function App() {
+  const { setColorMode } = useColorMode();
   const [showPrefs, setShowPrefs] = createSignal(false);
   const [showAddTask, setShowAddTask] = createSignal(false);
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
@@ -37,6 +43,14 @@ export default function App() {
   const [isDeleting, setIsDeleting] = createSignal(false);
   const [engineStatus, setEngineStatus] = createSignal("Connecting");
   const [tasks, setTasks] = createSignal<task.Task[]>([]);
+  const [themePref, setThemePref] = createSignal(
+    localStorage.getItem("ariadm-theme") || "system"
+  );
+
+  const handleThemeChange = (theme: "light" | "dark" | "system") => {
+    setColorMode(theme);
+    setThemePref(theme);
+  };
 
   // Calculate live cumulative download speeds from active tasks
   const totalDownloadSpeed = () => {
@@ -122,7 +136,7 @@ export default function App() {
   const confirmDelete = async () => {
     const id = taskToDelete();
     if (!id) return;
-    
+
     setIsDeleting(true);
     try {
       await DeleteTask(id);
@@ -171,6 +185,47 @@ export default function App() {
               <DropdownMenuShortcut class="font-mono text-[10px]">
                 Ctrl+N
               </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            as="button"
+            class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-none"
+          >
+            View
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-44 bg-popover border border-border text-popover-foreground shadow-md">
+            <DropdownMenuItem
+              onSelect={() => handleThemeChange("light")}
+              class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+            >
+              <Sun class="h-3.5 w-3.5 text-muted-foreground" />
+              <span class="flex-1">Light Theme</span>
+              <Show when={themePref() === "light"}>
+                <Check class="h-3.5 w-3.5 text-primary" />
+              </Show>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => handleThemeChange("dark")}
+              class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+            >
+              <Moon class="h-3.5 w-3.5 text-muted-foreground" />
+              <span class="flex-1">Dark Theme</span>
+              <Show when={themePref() === "dark"}>
+                <Check class="h-3.5 w-3.5 text-primary" />
+              </Show>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => handleThemeChange("system")}
+              class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+            >
+              <Monitor class="h-3.5 w-3.5 text-muted-foreground" />
+              <span class="flex-1">System Theme</span>
+              <Show when={themePref() === "system"}>
+                <Check class="h-3.5 w-3.5 text-primary" />
+              </Show>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
