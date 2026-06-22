@@ -55,6 +55,7 @@ func main() {
 
 	// 4. Launch the Wails Desktop Shell Application Window
 	app := NewApp()
+	actuallyQuit := false
 
 	// Create application with options
 	err = wails.Run(&options.App{
@@ -70,12 +71,22 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			app.OnStartup(ctx)    // 1. Fire up your aria2c daemon engine first
 			bridge.OnStartup(ctx) // 2. Pass context to the bridge to launch the telemetry ticker
+
+			runtime.EventsOn(ctx, "app:force-quit", func(optionalData ...interface{}) {
+				actuallyQuit = true
+				runtime.Quit(ctx)
+			})
 		},
+		OnShutdown: app.OnShutdown,
 		OnBeforeClose: func(ctx context.Context) (prevent bool) {
+			if actuallyQuit {
+				return false // Allow the app to close
+			}
 			// Emit event to frontend to show quit confirmation dialog
 			runtime.EventsEmit(ctx, "app:request-close")
 			return true // Prevent closing directly
 		},
+
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId: "ariadm-unique-lock-8f2k",
 			OnSecondInstanceLaunch: func(secondInstanceData options.SecondInstanceData) {
