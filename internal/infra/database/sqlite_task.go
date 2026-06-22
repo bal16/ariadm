@@ -108,3 +108,35 @@ func (r *SQLiteTaskRepository) Update(t *task.Task) error {
 	_, err := r.db.Exec(query, t.FileName, t.TotalLength, t.CompletedLength, t.Speed, string(t.Status), t.ID)
 	return err
 }
+
+func (r *SQLiteTaskRepository) GetAll() ([]*task.Task, error) {
+	query := `SELECT id, gid, url, file_name, total_length, completed_length, speed, status, created_at FROM tasks ORDER BY created_at DESC`
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []*task.Task
+	for rows.Next() {
+		var t task.Task
+		var statusStr string
+		var createdAtStr string
+
+		err := rows.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+		if err != nil {
+			return nil, err
+		}
+
+		t.Status = task.Status(statusStr)
+		t.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
+		tasks = append(tasks, &t)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}

@@ -31,6 +31,13 @@ func (m *DownloadEngineMock) AddURI(url, path string) (string, error) {
 }
 func (m *DownloadEngineMock) Pause(gid string) error   { return m.Called(gid).Error(0) }
 func (m *DownloadEngineMock) Unpause(gid string) error { return m.Called(gid).Error(0) }
+func (m *DownloadEngineMock) TellStatus(gid string) (*task.Aria2Status, error) {
+	args := m.Called(gid)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*task.Aria2Status), args.Error(1)
+}
 
 type ConfigRepositoryMock struct{ mock.Mock }
 
@@ -39,6 +46,14 @@ func (m *ConfigRepositoryMock) Load() (*config.AppConfig, error) {
 	return args.Get(0).(*config.AppConfig), args.Error(1)
 }
 func (m *ConfigRepositoryMock) Save(cfg *config.AppConfig) error { return m.Called(cfg).Error(0) }
+
+func (m *TaskRepositoryMock) GetAll() ([]*task.Task, error) {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*task.Task), args.Error(1)
+}
 
 // 2. Test Case (RED Phase)
 func TestDownloadFile_Success(t *testing.T) {
@@ -56,7 +71,7 @@ func TestDownloadFile_Success(t *testing.T) {
 
 	// We check if it attempts to save a task with correct properties to the DB
 	taskRepo.On("Create", mock.MatchedBy(func(t *task.Task) bool {
-		return t.URL == targetURL && t.GID == expectedGID && t.Status == task.StatusDownloading
+		return t.URL == targetURL && t.GID == expectedGID && t.Status == task.StatusActive
 	})).Return(nil)
 
 	service := task.NewTaskService(taskRepo, engine, configRepo)
@@ -105,7 +120,7 @@ func TestTogglePauseTask_ToPaused(t *testing.T) {
 	existingTask := &task.Task{
 		ID:     taskID,
 		GID:    aria2GID,
-		Status: task.StatusDownloading,
+		Status: task.StatusActive,
 	}
 
 	// 1. Expect service to fetch the current task state
@@ -147,7 +162,7 @@ func TestTogglePauseTask_ToResume(t *testing.T) {
 	taskRepo.On("GetByID", taskID).Return(existingTask, nil)
 	engine.On("Unpause", aria2GID).Return(nil) // Should call Unpause when currently Paused
 	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
-		return t.ID == taskID && t.Status == task.StatusDownloading
+		return t.ID == taskID && t.Status == task.StatusActive
 	})).Return(nil)
 
 	service := task.NewTaskService(taskRepo, engine, configRepo)

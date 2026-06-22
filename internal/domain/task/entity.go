@@ -13,11 +13,11 @@ var (
 )
 
 const (
-	StatusWaiting     Status = "waiting"
-	StatusDownloading Status = "downloading"
-	StatusPaused      Status = "paused"
-	StatusCompleted   Status = "completed"
-	StatusError       Status = "error"
+	StatusWaiting   Status = "waiting"
+	StatusActive    Status = "active"    // Maps to aria2c "active" status
+	StatusPaused    Status = "paused"
+	StatusCompleted Status = "complete"  // aria2c uses "complete" not "completed"
+	StatusError     Status = "error"
 )
 
 type Task struct {

@@ -6,6 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strconv"
+
+	"ariadm/internal/domain/task"
 )
 
 type Aria2Client struct {
@@ -114,5 +118,50 @@ func (c *Aria2Client) Unpause(gid string) error {
 func (c *Aria2Client) ChangeGlobalOption(options map[string]string) error {
 	_, err := c.call("aria2.changeGlobalOption", []interface{}{options})
 	return err
+}
+
+// TellStatus fetches a live progress snapshot from aria2c for a single GID
+func (c *Aria2Client) TellStatus(gid string) (*task.Aria2Status, error) {
+	// Request only the fields we need to avoid oversized payloads
+	keys := []string{"gid", "status", "totalLength", "completedLength", "downloadSpeed", "files"}
+	rawResult, err := c.call("aria2.tellStatus", []interface{}{gid, keys})
+	if err != nil {
+		return nil, err
+	}
+
+	// aria2 returns all numeric fields as strings — we decode into a raw map first
+	var raw struct {
+		GID             string `json:"gid"`
+		Status          string `json:"status"`
+		TotalLength     string `json:"totalLength"`
+		CompletedLength string `json:"completedLength"`
+		DownloadSpeed   string `json:"downloadSpeed"`
+		Files           []struct {
+			Path string `json:"path"`
+		} `json:"files"`
+	}
+	if err := json.Unmarshal(rawResult, &raw); err != nil {
+		return nil, fmt.Errorf("tellStatus: failed to decode aria2 response: %w", err)
+	}
+
+	parseI64 := func(s string) int64 {
+		v, _ := strconv.ParseInt(s, 10, 64)
+		return v
+	}
+
+	// Extract just the base filename from the full filesystem path
+	fileName := ""
+	if len(raw.Files) > 0 && raw.Files[0].Path != "" {
+		fileName = filepath.Base(raw.Files[0].Path)
+	}
+
+	return &task.Aria2Status{
+		GID:             raw.GID,
+		Status:          raw.Status,
+		TotalLength:     parseI64(raw.TotalLength),
+		CompletedLength: parseI64(raw.CompletedLength),
+		DownloadSpeed:   parseI64(raw.DownloadSpeed),
+		FileName:        fileName,
+	}, nil
 }
 
