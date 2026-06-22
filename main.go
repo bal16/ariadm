@@ -20,6 +20,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+// TODO: Handle if port already used
 var (
 	APP_NAME = "ariadm"
 	RPC_PORT = "6800"

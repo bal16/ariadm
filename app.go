@@ -29,6 +29,8 @@ func (a *App) OnStartup(ctx context.Context) {
 	if err := a.daemon.Start(); err != nil {
 		log.Printf("CRITICAL: Failed to launch download engine: %v\n", err)
 	}
+
+	// TODO: Handle if daemon already started or port already used
 }
 
 // OnShutdown is called when the application window closes
