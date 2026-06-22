@@ -114,7 +114,7 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 
 - [x] **Task 6.1 (Settings Screen):** Build a dedicated settings panel/modal. Bind its inputs to `GetApplicationConfig` and `SaveApplicationConfig` exposed by the `WailsBridge`.
 - [x] **Task 6.2 (Add Task Dialog):** Design a clean URL input modal to accept new downloads. Link the submission handler to your backend `TriggerNewDownload` method.
-- [ ] **Task 6.3 (Download List Component):** Create a robust task dashboard row displaying the file name, sizes, a progress bar (static for now), and control buttons that fire off `ToggleTaskPauseState`.
+- [x] **Task 6.3 (Download List Component):** Create a robust task dashboard row displaying the file name, sizes, a progress bar (static for now), and control buttons that fire off `ToggleTaskPauseState`.
 
 #### ⚡ PHASE 7: Real-Time Progress Synchronization (State Update Loop)
 

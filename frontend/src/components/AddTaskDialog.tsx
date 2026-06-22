@@ -18,11 +18,10 @@ export function AddTaskDialog(props: { onClose: () => void }) {
     setErrorMsg("");
 
     try {
-      // Execute core backend handler engineered during Phase 2 TDD
+      // 👈 Call your actual Go backend trigger method
       await TriggerNewDownload(url().trim());
-      props.onClose(); // Exit frame wrapper on success execution
+      props.onClose();
     } catch (err) {
-      // Automatically catches the rejection string if regex validation fails
       setErrorMsg(err instanceof Error ? err.message : String(err));
     } finally {
       setIsSubmitting(false);
@@ -32,7 +31,7 @@ export function AddTaskDialog(props: { onClose: () => void }) {
   return (
     <div class="absolute top-20 left-1/2 -translate-x-1/2 z-50 p-1 animate-in fade-in zoom-in-95 duration-150">
       <div class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-[480px] flex flex-col overflow-hidden">
-        {/* Window Title Header Grid Bar */}
+        {/* Title Bar */}
         <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-border bg-muted/60 select-none">
           <div class="flex items-center space-x-1.5 text-xs font-medium text-foreground">
             <Link class="h-3.5 w-3.5 text-primary" />
@@ -47,32 +46,28 @@ export function AddTaskDialog(props: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Form Body Frame */}
+        {/* Form Body */}
         <form onSubmit={handleSubmit} class="p-4 bg-background space-y-4">
-          {/* Error Bound Warning Alert Panel */}
           <Show when={errorMsg()}>
-            <div class="p-2 bg-destructive/10 border border-destructive/20 text-destructive text-[11px] font-mono rounded-sm flex items-start space-x-2 animate-in slide-in-from-top-1 duration-200">
+            <div class="p-2 bg-destructive/10 border border-destructive/20 text-destructive text-[11px] font-mono rounded-sm flex items-start space-x-2">
               <TriangleAlert class="h-3.5 w-3.5 shrink-0 mt-0.5" />
               <span>{errorMsg()}</span>
             </div>
           </Show>
 
-          {/* URL Entry Data Area */}
           <div class="space-y-1.5">
             <label class="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               Source Resource URL (HTTP / HTTPS)
             </label>
-            <div class="relative flex items-center">
-              <input
-                type="text"
-                autofocus
-                placeholder="Paste download path link address here..."
-                class="w-full pl-3 pr-3 py-1.5 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring"
-                value={url()}
-                onInput={(e) => setUrl(e.currentTarget.value)}
-                disabled={isSubmitting()}
-              />
-            </div>
+            <input
+              type="text"
+              autofocus
+              placeholder="Paste download path link address here..."
+              class="w-full px-3 py-1.5 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-none focus:ring-1 focus:ring-ring"
+              value={url()}
+              onInput={(e) => setUrl(e.currentTarget.value)}
+              disabled={isSubmitting()}
+            />
           </div>
 
           <div class="text-[10px] text-muted-foreground font-mono bg-muted/30 border border-border p-2 rounded-sm select-none">
@@ -81,7 +76,6 @@ export function AddTaskDialog(props: { onClose: () => void }) {
             stream.
           </div>
 
-          {/* Action Row Controllers Toolbar */}
           <div class="flex justify-end space-x-1.5 pt-2 border-t border-border">
             <button
               type="button"

@@ -87,7 +87,7 @@ export function DownloadList(props: DownloadListProps) {
                         <Show when={item.status === "paused"}>
                           <Pause class="h-3.5 w-3.5 text-amber-500" />
                         </Show>
-                        <Show when={item.status === "completed"}>
+                        <Show when={item.status === "complete" || item.status === "completed"}>
                           <CircleCheck class="h-3.5 w-3.5 text-emerald-500" />
                         </Show>
                         <Show when={item.status === "error"}>
@@ -117,7 +117,7 @@ export function DownloadList(props: DownloadListProps) {
                           <div class="flex-1 bg-muted rounded-full h-2 overflow-hidden border border-border/40 relative">
                             <div
                               class={`h-full transition-all duration-300 ${
-                                item.status === "completed"
+                                item.status === "complete" || item.status === "completed"
                                   ? "bg-emerald-500"
                                   : item.status === "error"
                                     ? "bg-destructive"
@@ -142,7 +142,7 @@ export function DownloadList(props: DownloadListProps) {
                               ? "text-blue-500"
                               : item.status === "paused"
                                 ? "text-amber-500"
-                                : item.status === "completed"
+                                : item.status === "complete" || item.status === "completed"
                                   ? "text-emerald-500"
                                   : "text-destructive"
                           }

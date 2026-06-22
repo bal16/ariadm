@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, onMount, onCleanup, Show } from "solid-js";
 import {
   Plus,
   Pause,
@@ -13,6 +13,7 @@ import { AddTaskDialog } from "~/components/AddTaskDialog";
 import { DownloadList } from "~/components/DownloadList";
 import { Button } from "~/components/ui/button";
 import { task } from "~/../wailsjs/go/models";
+import { EventsOn, EventsOff } from "~/../wailsjs/runtime/runtime";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,29 +21,81 @@ import {
   DropdownMenuTrigger,
   DropdownMenuShortcut,
 } from "~/components/ui/dropdown-menu";
+import {
+  ToggleTaskPauseState,
+  GetTasks,
+} from "~/../wailsjs/go/wailsbridge/WailsBridge";
 
 export default function App() {
   const [showPrefs, setShowPrefs] = createSignal(false);
   const [showAddTask, setShowAddTask] = createSignal(false);
-
-  // 1. Wrap plain objects inside task.Task.createFrom() to satisfy the class blueprint
+  const [engineStatus, setEngineStatus] = createSignal("Connecting");
   const [tasks, setTasks] = createSignal<task.Task[]>([]);
 
-  // 2. Ensure your mutation creates a proper class instance as well
-  const handleTogglePause = (id: string) => {
-    setTasks(
-      tasks().map((t) =>
-        t.id === id
-          ? task.Task.createFrom({
-              ...t,
-              status: t.status === "active" ? "paused" : "active",
-            })
-          : t,
-      ),
+  // Calculate live cumulative download speeds from active tasks
+  const totalDownloadSpeed = () => {
+    return tasks().reduce(
+      (acc, t) => acc + (t.status === "active" ? t.speed : 0),
+      0,
     );
   };
 
+  // Convert raw speed numbers into scannable text updates
+  const formatGlobalSpeed = (bytesPerSec: number) => {
+    if (bytesPerSec === 0) return "0.00 B/s";
+    const k = 1024;
+    const sizes = ["B/s", "KB/s", "MB/s", "GB/s"];
+    const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+    return (
+      parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+    );
+  };
+
+  onMount(async () => {
+    // Pull phase: Fetch the task data immediately on startup
+    try {
+      const initialTasks = await GetTasks();
+      if (initialTasks) {
+        setTasks(initialTasks.map((t) => task.Task.createFrom(t)));
+        setEngineStatus("Running");
+      }
+    } catch (err) {
+      console.error("Failed to load initial task records:", err);
+      setEngineStatus("Disconnected");
+    }
+
+    // Push phase: Keep listening for the background ticker loop updates
+    EventsOn("tasks:update", (incomingData: any[]) => {
+      if (!incomingData) {
+        setTasks([]);
+        return;
+      }
+      const parsedTasks = incomingData.map((t) => task.Task.createFrom(t));
+      setTasks(parsedTasks);
+    });
+
+    EventsOn("engine:status", (status: string) => {
+      setEngineStatus(status === "running" ? "Running" : "Disconnected");
+    });
+  });
+
+  onCleanup(() => {
+    // Clean up event stream listeners to prevent memory issues during live reload
+    EventsOff("tasks:update");
+    EventsOff("engine:status");
+  });
+
+  // Call your Go service layer rather than modifying mock arrays locally
+  const handleTogglePause = async (id: string) => {
+    try {
+      await ToggleTaskPauseState(id);
+    } catch (err) {
+      console.error("Failed to transition task status:", err);
+    }
+  };
+
   const handleDelete = (id: string) => {
+    // Handled in a future task by repository drop utilities
     setTasks(tasks().filter((t) => t.id !== id));
   };
 
@@ -153,8 +206,12 @@ export default function App() {
       <div class="bg-muted/60 text-muted-foreground border-t border-border px-3 py-1 text-xs flex items-center justify-between font-mono select-none z-30">
         <div class="flex items-center space-x-4">
           <div class="flex items-center space-x-1.5">
-            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-foreground font-medium">Engine: Running</span>
+            <span
+              class={`h-2 w-2 rounded-full ${engineStatus() === "Running" ? "bg-emerald-500 animate-pulse" : "bg-destructive"}`}
+            ></span>
+            <span class="text-foreground font-medium">
+              Engine: {engineStatus()}
+            </span>
           </div>
           <span class="text-muted-foreground/40">│</span>
           <span>Session: 127.0.0.1:6800</span>
@@ -162,7 +219,8 @@ export default function App() {
         <div class="flex items-center space-x-4">
           <span class="text-foreground flex items-center space-x-1">
             <Download class="h-3 w-3 rotate-180 text-muted-foreground/70" />
-            <span>⬇️ 18.42 MB/s</span>
+            {/* 👇 Live reactive download speed tracker accumulation */}
+            <span>⬇️ {formatGlobalSpeed(totalDownloadSpeed())}</span>
           </span>
           <span class="text-foreground flex items-center space-x-1">
             <Download class="h-3 w-3 text-muted-foreground/70" />
