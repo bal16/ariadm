@@ -51,7 +51,10 @@ func main() {
 	localHTTPServer := httpserver.NewHTTPServer(PORT, taskService)
 	if err := localHTTPServer.Start(); err != nil {
 		log.Printf("Warning: Extension listener failed to bind: %v", err)
+	} else {
+		log.Printf("Local HTTP Server is listening on http://127.0.0.1:%s", PORT)
 	}
+
 	defer localHTTPServer.Stop()
 
 	// 4. Launch the Wails Desktop Shell Application Window
