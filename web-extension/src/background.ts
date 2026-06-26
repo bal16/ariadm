@@ -1,8 +1,6 @@
 import browser from "webextension-polyfill";
 import { PORT } from "./config";
 
-console.log("Background service worker berjalan!");
-
 browser.runtime.onInstalled.addListener(() => {
   console.log("Installed Successfully.");
 });
