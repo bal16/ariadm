@@ -4,15 +4,15 @@ import { PORT } from "./config";
 console.log("Background service worker berjalan!");
 
 browser.runtime.onInstalled.addListener(() => {
-  console.log("Ekstensi berhasil diinstal.");
+  console.log("Installed Successfully.");
 });
 
 browser.downloads.onCreated.addListener((downloadItem) => {
   browser.downloads
     .cancel(downloadItem.id)
     .then(() => {
-      console.log(`Download dibatalkan: ${downloadItem.filename}`);
-      console.log({ url: downloadItem.url });
+      browser.downloads.erase({ id: downloadItem.id });
+
       fetch(`http://localhost:${PORT}/download`, {
         method: "POST",
         headers: {
@@ -24,6 +24,6 @@ browser.downloads.onCreated.addListener((downloadItem) => {
       });
     })
     .catch((error) => {
-      console.error(`Gagal membatalkan download: ${error}`);
+      console.error(`Failed to interrupt download: ${error}`);
     });
 });
