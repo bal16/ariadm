@@ -1,0 +1,13 @@
+{
+  "name": "Ariadm Integration",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "permissions": ["downloads"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "src/background.ts",
+    "scripts": ["src/background.ts"]
+  }
+}

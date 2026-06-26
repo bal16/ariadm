@@ -157,7 +157,7 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 
 _Target: Create a lightweight, secure Manifest V3 browser extension to capture download links natively from web interactions._
 
-- [ ] **Task 10.1 (Extension Boilerplate):** Build a browser extension directory path incorporating a compliant `manifest.json`, a background service worker (`background.js`), and a standard configuration popup panel asset.
+- [x] **Task 10.1 (Extension Boilerplate):** Build a browser extension directory path incorporating a compliant `manifest.json`, a background service worker (`background.js`), and a standard configuration popup panel asset.
 - [ ] **Task 10.2 (Context Menu Interceptor):** Register a dedicated custom entry in the browser right-click context menu titled "Download with AriaDM" to intercept destination parameters like `linkUrl` or `srcUrl`.
-- [ ] **Task 10.3 (Secure Handshake API Linker):** Implement structural JSON payload transfers using standard asynchronous `fetch` API methods inside the background service worker pointing straight to the local AriaDM HTTP REST port selection range (`127.0.0.1:58300-58305`).
+- [x] **Task 10.3 (Secure Handshake API Linker):** Implement structural JSON payload transfers using standard asynchronous `fetch` API methods inside the background service worker pointing straight to the local AriaDM HTTP REST port selection range (`127.0.0.1:58300-58305`).
 - [ ] **Task 10.4 (Auth Token Exchange):** Secure the cross-process pipe by injecting an ephemeral, static authorization token within the request headers to ensure the Local API rejects unauthenticated third-party command execution strings.
