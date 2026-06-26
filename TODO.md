@@ -1,7 +1,3 @@
-Here is your updated **Task / To-Do List** with the new tasks for implementing the port strategies for both the `aria2c` RPC daemon and the Local HTTP API integrated cleanly into Phase 3 and Phase 4.
-
----
-
 # Todo List
 
 ## PROJECT SETUP AND BACKEND PHASE
@@ -82,6 +78,14 @@ _Target: Handle the download queue logic, link validation, and task control comm
 - [ ] **RED**: Write test cases for `TestPauseAll_Success` and `TestResumeAll_Success` to ensure mass status updates validate cleanly against the service layer.
 - [ ] **GREEN**: Implement the `PauseAllTasks()` and `ResumeAllTasks()` methods to dispatch execution commands out to the `aria2.pauseAll` and `aria2.unpauseAll` RPC endpoints.
 
+- [ ] **Task 2.5 (TDD - Expired URL Refreshing):**
+- [ ] **RED**: Write a unit test case `TestUpdateTaskURL_Success` verifying that passing a new URL targets the corresponding database item, calls the RPC layer to hot-swap the connection string, and updates the local state.
+- [ ] **GREEN**: Implement `UpdateTaskURL(taskID string, newURL string)` inside `TaskService` utilizing validation regex wrappers.
+
+- [ ] **Task 2.6 (TDD - Cross-Session Reconciler):**
+- [ ] **RED**: Write a `TestReconcileSessionTasks_Success` routine simulating an app restart where database entries marked as unfinished are checked against the live daemon environment.
+- [ ] **GREEN**: Implement `ReconcileSessionTasks()` to automatically re-inject missing tracking elements back into the daemon queue on application startup if the underlying download files are still present.
+
 ---
 
 ### 💻 PHASE 3: Infrastructure Implementation (Technical Delivery)
@@ -92,10 +96,12 @@ _Target: Connect the domain interfaces to concrete databases, local files, and s
 - [ ] **Task 3.1.1 (Port Collision Mitigation):** Implement runtime checks before spawning the daemon process. If the target RPC port is already bound, perform a handshake validation check to determine if it is a lingering instance from our own app or a foreign asset.
 - [ ] **Task 3.1.2 (Daemon Orphan Recovery):** Design a hot-recovery routine to automatically re-attach the runtime pipeline to the active daemon process tree if an orphan instance is already running safely, rather than throwing a hard port collision panic.
 - [ ] **Task 3.1.3 (Aria2c RPC Port Assignment Strategy):** Implement an isolated, unique port strategy for the `aria2c` daemon (e.g., binding explicitly to `127.0.0.1` on a safe static custom port like `56800` instead of the noisy default `6800`) to guarantee zero interference with external download tools.
+- [ ] **Task 3.1.4 (Persistent Session Flagging):** Update the `os/exec` initialization flags inside the Daemon Manager to include `--save-session=session.txt` and `--input-file=session.txt` pointing to the application's secure storage directory to ensure native process persistence across restarts.
 - [x] **Task 3.2 (JSON Config Repo):** Implement `JSONConfigRepository` to read and write the `config.json` file inside the OS-specific AppData/Config folder.
 - [x] **Task 3.3 (SQLite Repo):** Implement `SQLiteRepository` using a pure Go driver (`modernc.org/sqlite`) to store `Task` records permanently.
 - [x] **Task 3.3.1:** Write Integration Tests for SQLiteTaskRepository against a real temporary database file.
 - [x] **Task 3.4 (RPC Client):** Implement the actual WebSocket/HTTP client in `infrastructure/rpc/` to dispatch JSON-RPC commands to the `aria2c` port.
+- [ ] **Task 3.4.1 (RPC Target Method Bindings):** Add structural bindings for `aria2.changeUri` (for URL refreshing) and `aria2.saveSession` (for forcing memory-to-disk session flashes) into the concrete JSON-RPC Go client infrastructure layer.
 
 ---
 
@@ -106,6 +112,7 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 - [x] **Task 4.1 (Local HTTP Server):** Build a lightweight REST API server using Go’s built-in `net/http` package to catch download links forwarded by the browser extension (Chrome/Firefox).
 - [ ] **Task 4.1.1 (Local API Port Scanning Fallback Strategy):** Upgrade the server boot sequence to implement a progressive port allocation range (e.g., trying `58300`, falling back sequentially up to `58305` if occupied). Ensure it binds strictly to `127.0.0.1` and handles dynamic health checks so the browser extension can find it reliably.
 - [ ] **Task 4.1.2 (CORS & Security Sanitization):** Enforce strict CORS policies on the listener socket to exclusively permit incoming execution targets matching your dedicated extension ID origin (`chrome-extension://...`), blocking unauthenticated cross-origin exploit scripts.
+- [ ] **Task 4.2.1 (Wails Bridge Hot-Swap Routing):** Expose an `UpdateExpiredURL(taskID string, newURL string)` method inside `ingress/wailsbridge/controller.go` to provide the frontend with a direct pipeline for managing broken task items.
 
 ---
 
@@ -126,6 +133,7 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 - [x] **Task 6.2 (Add Task Dialog):** Design a clean URL input modal to accept new downloads. Link the submission handler to your backend `TriggerNewDownload` method.
 - [x] **Task 6.3 (Download List Component):** Create a robust task dashboard row displaying the file name, sizes, a progress bar, and control buttons that fire off `ToggleTaskPauseState`.
 - [ ] **Task 6.4 (Toolbar Global Action Wiring):** Wire the action buttons for "Pause All" and "Resume All" inside the top-level application navigation toolbar of `App.tsx` to call your new mass-operation bridge methods.
+- [ ] **Task 6.5 (URL Refresh Dialog Modal):** Create a popup modal triggered exclusively when clicking a "Refresh Link" option on tasks stuck in an `error` state. Bind this action to the backend `UpdateExpiredURL` bridge.
 
 ---
 
@@ -150,6 +158,7 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 - [x] **Task 9.4 (Background Functionality):** Implement seamless running in the background. Hiding the window keeps the active daemon alive, and configuring Wails `SingleInstanceLock` ensures that reopening the app summons the existing process back to the foreground seamlessly.
 - [ ] **Task 9.5 (Sleeper Mode - Go Memory Trimming):** Intercept the `OnWindowHide` / `OnWindowMinimize` lifecycle event hooks in the Wails backend framework. Execute a routine to explicitly invoke the Go garbage collector via `runtime/debug.FreeOSMemory()` and `runtime.GC()` to drop unused virtual heap from the system memory instantly.
 - [ ] **Task 9.6 (Sleeper Mode - WebKit Cache Drop):** Dispatch an optimization signal down to the active Webview layer during background transitions to dump GPU rendering texture assets, and throttle down or freeze the SolidJS polling interval entirely to keep RAM usage near flat while running hidden.
+- [ ] **Task 9.7 (Graceful Session Flush on Shutdown):** Intercept application shutdown events inside `main.go` to trigger `aria2.saveSession` via the RPC client layer immediately before killing the daemon process, ensuring zero metadata loss.
 
 ---
 
