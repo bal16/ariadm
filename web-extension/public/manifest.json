@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "manifest_version": 3,
   "permissions": ["downloads"],
+  "host_permissions": ["http://localhost:9999/download"],
   "action": {
     "default_popup": "popup.html"
   },
