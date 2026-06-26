@@ -33,6 +33,13 @@ type downloadResponse struct {
 }
 
 func (s *HTTPServer) HandleDownload(w http.ResponseWriter, r *http.Request) {
+	s.enableCors(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	// 1. Enforce POST requests only
 	if r.Method != http.MethodPost {
 		s.writeJSON(w, http.StatusMethodNotAllowed, downloadResponse{Success: false, Message: "Method not allowed"})
@@ -66,6 +73,12 @@ func (s *HTTPServer) HandleDownload(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *HTTPServer) enableCors(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+}
+
 // Internal utility helper to write JSON responses uniformly
 func (s *HTTPServer) writeJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
@@ -76,6 +89,7 @@ func (s *HTTPServer) writeJSON(w http.ResponseWriter, statusCode int, payload in
 // Start binds to the local address and launches the HTTP service listener
 func (s *HTTPServer) Start() error {
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("/download", s.HandleDownload)
 
 	s.server = &http.Server{
