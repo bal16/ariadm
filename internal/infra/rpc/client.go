@@ -77,10 +77,13 @@ func (c *Aria2Client) call(method string, params []interface{}) (json.RawMessage
 }
 
 // AddURI sends a new download URL to aria2c and returns the engine's GID string
-func (c *Aria2Client) AddURI(url string, downloadPath string) (string, error) {
+func (c *Aria2Client) AddURI(url string, downloadPath string, fileName string) (string, error) {
 	// Options specific to this download task
 	options := map[string]string{
 		"dir": downloadPath,
+	}
+	if fileName != "" {
+		options["out"] = fileName
 	}
 
 	// aria2.addUri signature: [ [urls], {options} ]
@@ -185,4 +188,3 @@ func (c *Aria2Client) TellStatus(gid string) (*task.Aria2Status, error) {
 		Files:           filePaths,
 	}, nil
 }
-

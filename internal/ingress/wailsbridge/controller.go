@@ -4,6 +4,9 @@ import (
 	"ariadm/internal/domain/config"
 	"ariadm/internal/domain/task"
 	"context"
+	"errors"
+	"log"
+	"net"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -40,7 +43,11 @@ func (b *WailsBridge) TriggerNewDownload(url string) (*task.Task, error) {
 
 // ToggleTaskPauseState flips the network engine status for a single task queue item
 func (b *WailsBridge) ToggleTaskPauseState(taskID string) error {
-	return b.taskService.TogglePauseTask(taskID)
+	err := b.taskService.TogglePauseTask(taskID)
+
+	log.Printf("ToggleTaskPauseState called for taskID=%s, error=%v", taskID, err)
+
+	return err
 }
 
 // DeleteTask removes a download from aria2c's queue and wipes its record from the local database
@@ -51,7 +58,21 @@ func (b *WailsBridge) DeleteTask(taskID string, deleteFiles bool) error {
 // OnStartup is invoked automatically by the Wails runtime engine engine
 func (b *WailsBridge) OnStartup(ctx context.Context) {
 	b.ctx = ctx
-	go b.startTelemetryLoop() // 👈 Spin up the concurrent background engine ticker
+
+	go func() {
+		targetPort := "127.0.0.1:6800"
+		if err := b.waitForDaemon(targetPort, 5*time.Second); err != nil {
+			log.Printf("Error: Aria2c daemon RPC socket failed to initialize within timeout: %v", err)
+			runtime.EventsEmit(b.ctx, "engine:status", "disconnected")
+			return
+		}
+		if err := b.taskService.ReconcileSessionTasks(); err != nil {
+			// Log the initialization warning, but don't crash the app
+			log.Println("Warning: Cross-session reconciliation encountered an issue:", err.Error())
+		}
+		b.startTelemetryLoop()
+	}()
+
 }
 
 func (b *WailsBridge) startTelemetryLoop() {
@@ -80,4 +101,25 @@ func (b *WailsBridge) startTelemetryLoop() {
 // GetTasks queries, enriches with live aria2c data, and returns all task records
 func (b *WailsBridge) GetTasks() ([]*task.Task, error) {
 	return b.taskService.SyncAndGetAllTasks()
+}
+
+// waitForDaemon polls the network address until it accepts connections or hits the timeout threshold
+func (b *WailsBridge) waitForDaemon(target string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		// Attempt a low-overhead raw TCP connection probe
+		conn, err := net.DialTimeout("tcp", target, 200*time.Millisecond)
+		if err == nil {
+			conn.Close()
+			return nil // Daemon port is active and listening!
+		}
+
+		// Back-off briefly before retrying
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	log.Printf("timeout reached waiting for port %s to open", target)
+
+	return errors.New("timeout reached waiting for daemon to start")
 }

@@ -23,10 +23,10 @@ type Aria2Status struct {
 
 // DownloadEngine handles task manipulation commands sent to aria2c
 type DownloadEngine interface {
-	AddURI(url string, downloadPath string) (string, error) // Returns GID
+	AddURI(url string, downloadPath string, fileName string) (string, error) // Returns GID
 	Pause(gid string) error
 	Unpause(gid string) error
-	TellStatus(gid string) (*Aria2Status, error)        // Fetch live progress snapshot for one GID
-	Remove(gid string) error                             // Stop and remove an active/paused/waiting download
-	RemoveDownloadResult(gid string) error               // Purge a completed/error/removed entry from aria2c's memory
+	TellStatus(gid string) (*Aria2Status, error) // Fetch live progress snapshot for one GID
+	Remove(gid string) error                     // Stop and remove an active/paused/waiting download
+	RemoveDownloadResult(gid string) error       // Purge a completed/error/removed entry from aria2c's memory
 }

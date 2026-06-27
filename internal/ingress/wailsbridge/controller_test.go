@@ -17,7 +17,7 @@ import (
 
 type MockDownloadEngine struct{ mock.Mock }
 
-func (m *MockDownloadEngine) AddURI(url, path string) (string, error) {
+func (m *MockDownloadEngine) AddURI(url, path, fileName string) (string, error) {
 	args := m.Called(url, path)
 	return args.String(0), args.Error(1)
 }

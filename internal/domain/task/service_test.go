@@ -3,7 +3,9 @@ package task_test
 import (
 	"ariadm/internal/domain/config"
 	"ariadm/internal/domain/task"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,11 +24,11 @@ func (m *TaskRepositoryMock) GetByGID(gid string) (*task.Task, error) {
 	return args.Get(0).(*task.Task), args.Error(1)
 }
 func (m *TaskRepositoryMock) Update(t *task.Task) error { return m.Called(t).Error(0) }
-func (m *TaskRepositoryMock) Delete(id string) error   { return m.Called(id).Error(0) }
+func (m *TaskRepositoryMock) Delete(id string) error    { return m.Called(id).Error(0) }
 
 type DownloadEngineMock struct{ mock.Mock }
 
-func (m *DownloadEngineMock) AddURI(url, path string) (string, error) {
+func (m *DownloadEngineMock) AddURI(url, path string, fileName string) (string, error) {
 	args := m.Called(url, path)
 	return args.String(0), args.Error(1)
 }
@@ -244,4 +246,45 @@ func TestDeleteTask_CompletedTask(t *testing.T) {
 	engine.AssertExpectations(t)
 	// Remove must NOT be called for a completed task
 	engine.AssertNotCalled(t, "Remove", mock.Anything)
+}
+
+func TestTaskService_ReconcileSessionTasks_OrphanRecovery(t *testing.T) {
+	mockRepo := new(TaskRepositoryMock)
+	mockEngine := new(DownloadEngineMock) // Reusing the mock engine interface from previous iterations
+	mockConfig := new(ConfigRepositoryMock)
+
+	service := task.NewTaskService(mockRepo, mockEngine, mockConfig)
+
+	oldGID := "aria2_orphan_gid_001"
+	newGID := "aria2_refreshed_gid_999"
+	targetURL := "https://releases.cachyos.org/desktop/cachyos-desktop-linux.iso"
+	downloadDir := "/home/bal/Downloads"
+
+	// 1. Arrange: The database returns an active task whose GID has dropped out of aria2c memory
+	orphanTask := &task.Task{
+		ID:        "local_task_uuid_abc",
+		GID:       oldGID,
+		URL:       targetURL,
+		Status:    task.StatusActive,
+		CreatedAt: time.Now(),
+	}
+	mockRepo.On("GetAll").Return([]*task.Task{orphanTask}, nil)
+	mockConfig.On("Load").Return(&config.AppConfig{DefaultDownloadPath: downloadDir}, nil)
+
+	// 2. Expect: The reconciler checks the daemon, which throws an error ("GID not found")
+	mockEngine.On("TellStatus", oldGID).Return((*task.Aria2Status)(nil), errors.New("GID not found"))
+
+	// 3. Expect: The service catches the failure, calls AddURI to re-register the item, and persists the new GID
+	mockEngine.On("AddURI", targetURL, downloadDir).Return(newGID, nil)
+	mockRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == "local_task_uuid_abc" && t.GID == newGID && t.Status == task.StatusActive
+	})).Return(nil)
+
+	// 🛠️ Action Execution
+	err := service.ReconcileSessionTasks()
+
+	// Assertions Verification
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+	mockEngine.AssertExpectations(t)
 }

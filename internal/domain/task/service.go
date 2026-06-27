@@ -3,8 +3,10 @@ package task
 import (
 	"ariadm/internal/domain/config"
 	"errors"
+	"log"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -36,7 +38,7 @@ func (s *TaskService) DownloadFile(url string) (*Task, error) {
 	}
 
 	// 3. Dispatch the URL request to the aria2c engine instance
-	gid, err := s.engine.AddURI(url, cfg.DefaultDownloadPath)
+	gid, err := s.engine.AddURI(url, cfg.DefaultDownloadPath, "")
 	if err != nil {
 		return nil, err
 	}
@@ -65,11 +67,22 @@ func (s *TaskService) TogglePauseTask(id string) error {
 		return err
 	}
 
+	// Fetch download directory layout in case we need to heal an orphaned task tracking block
+	cfg, err := s.configRepo.Load()
+	if err != nil {
+		return err
+	}
+
 	// 2. Evaluate the current task state machine status
 	switch t.Status {
 	case StatusActive:
 		// Instruct aria2c engine to halt network operations
 		if err := s.engine.Pause(t.GID); err != nil {
+			// If the daemon was reset and the GID is already gone, just force local synchronization
+			if strings.Contains(err.Error(), "is not found") {
+				t.Status = StatusPaused
+				break
+			}
 			return err
 		}
 		t.Status = StatusPaused
@@ -77,6 +90,19 @@ func (s *TaskService) TogglePauseTask(id string) error {
 	case StatusPaused:
 		// Instruct aria2c engine to fire up network segments again
 		if err := s.engine.Unpause(t.GID); err != nil {
+			// 🎯 ON-THE-FLY HEALING: Handle daemon session wipe or dropped GID environments
+			if strings.Contains(err.Error(), "is not found") {
+				// Re-inject link with the verified filename to attach to the existing .aria2 chunk file
+				newGID, rpcErr := s.engine.AddURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
+				if rpcErr != nil {
+					return rpcErr
+				}
+
+				// Assign the fresh daemon tracking key and push the state machine back to active
+				t.GID = newGID
+				t.Status = StatusActive
+				break
+			}
 			return err
 		}
 		t.Status = StatusActive
@@ -190,4 +216,48 @@ func (s *TaskService) SyncAndGetAllTasks() ([]*Task, error) {
 	}
 
 	return tasks, nil
+}
+
+// ReconcileSessionTasks inspects the local database tracking queue on startup and
+// automatically heals or re-injects tasks that were dropped from active daemon memory.
+func (s *TaskService) ReconcileSessionTasks() error {
+	tasks, err := s.taskRepo.GetAll()
+	if err != nil {
+		return err
+	}
+
+	// downloadDir := s.configProvider.GetDefaultDownloadPath()
+	cfg, err := s.configRepo.Load()
+	if err != nil {
+		return errors.New("failed to load configuration details")
+	}
+
+	for _, t := range tasks {
+		// We only care about tracking states that should actively exist in a runtime queue
+		if t.Status == StatusActive || t.Status == StatusPaused {
+			_, err := s.engine.TellStatus(t.GID)
+			if err != nil {
+				// GID is dead or missing from the current aria2c process session context
+				// Re-inject the resource URL. Aria2c automatically picks up existing files natively.
+				log.Printf("%v", t)
+				newGID, rpcErr := s.engine.AddURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
+				if rpcErr != nil {
+					// If the engine fails completely, flag the task tracking row locally as an error
+					log.Printf("error happen %v", rpcErr)
+					t.Status = StatusError
+					_ = s.taskRepo.Update(t)
+					continue
+				}
+
+				// Map the freshly generated runtime identifier back to the system entity record
+				t.GID = newGID
+				err = s.taskRepo.Update(t)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
