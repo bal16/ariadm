@@ -2,7 +2,7 @@
   "name": "Ariadm Integration",
   "version": "1.0.0",
   "manifest_version": 3,
-  "permissions": ["downloads"],
+  "permissions": ["downloads", "storage"],
   "host_permissions": ["http://localhost:9999/download"],
   "action": {
     "default_popup": "popup.html"
