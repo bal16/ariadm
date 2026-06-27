@@ -82,9 +82,9 @@ _Target: Handle the download queue logic, link validation, and task control comm
 - [ ] **RED**: Write a unit test case `TestUpdateTaskURL_Success` verifying that passing a new URL targets the corresponding database item, calls the RPC layer to hot-swap the connection string, and updates the local state.
 - [ ] **GREEN**: Implement `UpdateTaskURL(taskID string, newURL string)` inside `TaskService` utilizing validation regex wrappers.
 
-- [ ] **Task 2.6 (TDD - Cross-Session Reconciler):**
-- [ ] **RED**: Write a `TestReconcileSessionTasks_Success` routine simulating an app restart where database entries marked as unfinished are checked against the live daemon environment.
-- [ ] **GREEN**: Implement `ReconcileSessionTasks()` to automatically re-inject missing tracking elements back into the daemon queue on application startup if the underlying download files are still present.
+- [x] **Task 2.6 (TDD - Cross-Session Reconciler):**
+- [x] **RED**: Write a `TestReconcileSessionTasks_Success` routine simulating an app restart where database entries marked as unfinished are checked against the live daemon environment.
+- [x] **GREEN**: Implement `ReconcileSessionTasks()` to automatically re-inject missing tracking elements back into the daemon queue on application startup if the underlying download files are still present.
 
 ---
 
@@ -96,7 +96,6 @@ _Target: Connect the domain interfaces to concrete databases, local files, and s
 - [ ] **Task 3.1.1 (Port Collision Mitigation):** Implement runtime checks before spawning the daemon process. If the target RPC port is already bound, perform a handshake validation check to determine if it is a lingering instance from our own app or a foreign asset.
 - [ ] **Task 3.1.2 (Daemon Orphan Recovery):** Design a hot-recovery routine to automatically re-attach the runtime pipeline to the active daemon process tree if an orphan instance is already running safely, rather than throwing a hard port collision panic.
 - [ ] **Task 3.1.3 (Aria2c RPC Port Assignment Strategy):** Implement an isolated, unique port strategy for the `aria2c` daemon (e.g., binding explicitly to `127.0.0.1` on a safe static custom port like `56800` instead of the noisy default `6800`) to guarantee zero interference with external download tools.
-- [ ] **Task 3.1.4 (Persistent Session Flagging):** Update the `os/exec` initialization flags inside the Daemon Manager to include `--save-session=session.txt` and `--input-file=session.txt` pointing to the application's secure storage directory to ensure native process persistence across restarts.
 - [x] **Task 3.2 (JSON Config Repo):** Implement `JSONConfigRepository` to read and write the `config.json` file inside the OS-specific AppData/Config folder.
 - [x] **Task 3.3 (SQLite Repo):** Implement `SQLiteRepository` using a pure Go driver (`modernc.org/sqlite`) to store `Task` records permanently.
 - [x] **Task 3.3.1:** Write Integration Tests for SQLiteTaskRepository against a real temporary database file.
@@ -158,7 +157,6 @@ _Target: Prepare the backend to intercept commands from both the browser extensi
 - [x] **Task 9.4 (Background Functionality):** Implement seamless running in the background. Hiding the window keeps the active daemon alive, and configuring Wails `SingleInstanceLock` ensures that reopening the app summons the existing process back to the foreground seamlessly.
 - [ ] **Task 9.5 (Sleeper Mode - Go Memory Trimming):** Intercept the `OnWindowHide` / `OnWindowMinimize` lifecycle event hooks in the Wails backend framework. Execute a routine to explicitly invoke the Go garbage collector via `runtime/debug.FreeOSMemory()` and `runtime.GC()` to drop unused virtual heap from the system memory instantly.
 - [ ] **Task 9.6 (Sleeper Mode - WebKit Cache Drop):** Dispatch an optimization signal down to the active Webview layer during background transitions to dump GPU rendering texture assets, and throttle down or freeze the SolidJS polling interval entirely to keep RAM usage near flat while running hidden.
-- [ ] **Task 9.7 (Graceful Session Flush on Shutdown):** Intercept application shutdown events inside `main.go` to trigger `aria2.saveSession` via the RPC client layer immediately before killing the daemon process, ensuring zero metadata loss.
 
 ---
 
