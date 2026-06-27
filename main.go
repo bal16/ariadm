@@ -10,6 +10,9 @@ import (
 	"context"
 	"embed"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -80,6 +83,15 @@ func main() {
 				actuallyQuit = true
 				runtime.Quit(ctx)
 			})
+
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+			go func() {
+				<-c
+				println("\nTerminal shutdown signal detected. Exiting gracefully...")
+				actuallyQuit = true
+				runtime.Quit(ctx) // Forces Wails to run OnShutdown immediately
+			}()
 		},
 		OnShutdown: app.OnShutdown,
 		OnBeforeClose: func(ctx context.Context) (prevent bool) {
@@ -92,7 +104,7 @@ func main() {
 		},
 
 		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId: "ariadm-unique-lock-8f2k",
+			UniqueId: "ariadm-lock-8f2k",
 			OnSecondInstanceLaunch: func(secondInstanceData options.SecondInstanceData) {
 				// Re-show window if it was hidden in background
 				runtime.WindowShow(app.ctx)
