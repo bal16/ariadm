@@ -19,14 +19,9 @@ import { AddTaskDialog } from "~/components/AddTaskDialog";
 import { DownloadList } from "~/components/DownloadList";
 import { DeleteConfirmDialog } from "~/components/DeleteConfirmDialog";
 import { QuitConfirmDialog } from "~/components/QuitConfirmDialog";
+import { Events, Window } from "@wailsio/runtime";
 import { Button } from "~/components/ui/button";
-import { task } from "~/../wailsjs/go/models";
-import {
-  EventsOn,
-  EventsOff,
-  EventsEmit,
-  Hide,
-} from "~/../wailsjs/runtime/runtime";
+import type { Task } from "~/../bindings/ariadm/internal/domain/task/models";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +33,7 @@ import {
   ToggleTaskPauseState,
   GetTasks,
   DeleteTask,
-} from "~/../wailsjs/go/wailsbridge/WailsBridge";
+} from "~/../bindings/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
 export default function App() {
   const { setColorMode } = useColorMode();
@@ -48,7 +43,7 @@ export default function App() {
   const [taskToDelete, setTaskToDelete] = createSignal<string | null>(null);
   const [isDeleting, setIsDeleting] = createSignal(false);
   const [engineStatus, setEngineStatus] = createSignal("Connecting");
-  const [tasks, setTasks] = createStore<task.Task[]>([]);
+  const [tasks, setTasks] = createStore<Task[]>([]);
   const [themePref, setThemePref] = createSignal(
     localStorage.getItem("ariadm-theme") || "system",
   );
@@ -82,7 +77,7 @@ export default function App() {
     try {
       const initialTasks = await GetTasks();
       if (initialTasks) {
-        setTasks(initialTasks.map((t) => task.Task.createFrom(t)));
+        setTasks(initialTasks.filter((t): t is Task => t !== null));
         setEngineStatus("Running");
       }
     } catch (err) {
@@ -91,7 +86,8 @@ export default function App() {
     }
 
     // Push phase: Keep listening for the background ticker loop updates
-    EventsOn("tasks:update", (incomingData: any[]) => {
+    Events.On("tasks:update", (event) => {
+      const incomingData = event.data as Task[] | null;
       if (!incomingData) {
         setTasks([]);
         return;
@@ -100,11 +96,12 @@ export default function App() {
       setTasks(reconcile(incomingData, { key: "id" }));
     });
 
-    EventsOn("engine:status", (status: string) => {
+    Events.On("engine:status", (event) => {
+      const status = event.data as string;
       setEngineStatus(status === "running" ? "Running" : "Disconnected");
     });
 
-    EventsOn("app:request-close", () => {
+    Events.On("app:request-close", () => {
       setShowQuitDialog(true);
     });
 
@@ -121,7 +118,7 @@ export default function App() {
 
     onCleanup(() => {
       // Clean up event stream listeners to prevent memory issues during live reload
-      EventsOff("tasks:update", "engine:status", "app:request-close");
+      Events.Off("tasks:update", "engine:status", "app:request-close");
       window.removeEventListener("keydown", handleKeyDown);
     });
   });
@@ -157,12 +154,12 @@ export default function App() {
   };
 
   const handleQuit = () => {
-    EventsEmit("app:force-quit");
+    void Events.Emit("app:force-quit");
   };
 
   const handleBackground = () => {
     setShowQuitDialog(false);
-    Hide();
+    void Window.Hide();
   };
 
   return (

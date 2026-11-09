@@ -8,7 +8,7 @@ import {
   Download,
   CircleAlert,
 } from "lucide-solid";
-import { task } from "~/../wailsjs/go/models";
+import type { Task } from "~/../bindings/ariadm/internal/domain/task/models";
 
 const formatBytes = (bytes: number) => {
   if (bytes === 0) return "0 B";
@@ -19,7 +19,7 @@ const formatBytes = (bytes: number) => {
 };
 
 interface DownloadListProps {
-  tasks: task.Task[];
+  tasks: Task[];
   onTogglePause: (id: string) => void;
   onDelete: (id: string) => void;
 }
@@ -82,8 +82,7 @@ export function DownloadList(props: DownloadListProps) {
                         {item.status === "paused" && (
                           <Pause class="h-3.5 w-3.5 text-amber-500" />
                         )}
-                        {(item.status === "complete" ||
-                          item.status === "completed") && (
+                        {(item.status === "complete") && (
                           <CircleCheck class="h-3.5 w-3.5 text-emerald-500" />
                         )}
                         {item.status === "error" && (
@@ -111,8 +110,7 @@ export function DownloadList(props: DownloadListProps) {
                         <div class="flex-1 bg-muted rounded-full h-2 overflow-hidden border border-border/40 relative">
                           <div
                             class={`h-full transition-all duration-300 ${
-                              item.status === "complete" ||
-                              item.status === "completed"
+                              item.status === "complete"
                                 ? "bg-emerald-500"
                                 : item.status === "error"
                                   ? "bg-destructive"
@@ -136,8 +134,7 @@ export function DownloadList(props: DownloadListProps) {
                             ? "text-blue-500"
                             : item.status === "paused"
                               ? "text-amber-500"
-                              : item.status === "complete" ||
-                                  item.status === "completed"
+                              : item.status === "complete"
                                 ? "text-emerald-500"
                                 : "text-destructive"
                         }

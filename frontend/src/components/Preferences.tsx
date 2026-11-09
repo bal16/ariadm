@@ -2,7 +2,7 @@ import { createResource, createSignal, Show, For } from "solid-js";
 import {
   GetApplicationConfig,
   SaveApplicationConfig,
-} from "~/../wailsjs/go/wailsbridge/WailsBridge";
+} from "~/../bindings/ariadm/internal/ingress/wailsbridge/wailsbridge";
 import { Download, Zap, Settings, X, Save } from "lucide-solid";
 
 type TabType = "download" | "speed" | "general";

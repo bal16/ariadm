@@ -1,6 +1,6 @@
 import { createSignal, Show } from "solid-js";
 import { Link, X, Download, TriangleAlert } from "lucide-solid";
-import { TriggerNewDownload } from "~/../wailsjs/go/wailsbridge/WailsBridge";
+import { TriggerNewDownload } from "~/../bindings/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
 export function AddTaskDialog(props: { onClose: () => void }) {
   const [url, setUrl] = createSignal("");
