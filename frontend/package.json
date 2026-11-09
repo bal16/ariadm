@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ariadm/tokens": "workspace:*",
     "@kobalte/core": "^0.13.11",
     "@wailsio/runtime": "3.0.0",
     "class-variance-authority": "^0.7.1",
