@@ -9,18 +9,18 @@ import (
 	"net"
 	"time"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type WailsBridge struct {
 	ctx           context.Context
+	cancel        context.CancelFunc
 	configService *config.ConfigService
 	taskService   *task.TaskService
 }
 
 func NewWailsBridge(cs *config.ConfigService, ts *task.TaskService) *WailsBridge {
 	return &WailsBridge{
-		ctx:           context.Background(),
 		configService: cs,
 		taskService:   ts,
 	}
@@ -55,15 +55,15 @@ func (b *WailsBridge) DeleteTask(taskID string, deleteFiles bool) error {
 	return b.taskService.DeleteTask(taskID, deleteFiles)
 }
 
-// OnStartup is invoked automatically by the Wails runtime engine engine
-func (b *WailsBridge) OnStartup(ctx context.Context) {
-	b.ctx = ctx
+// ServiceStartup is invoked automatically by the Wails runtime engine.
+func (b *WailsBridge) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
+	b.ctx, b.cancel = context.WithCancel(ctx)
 
 	go func() {
 		targetPort := "127.0.0.1:6800"
 		if err := b.waitForDaemon(targetPort, 5*time.Second); err != nil {
 			log.Printf("Error: Aria2c daemon RPC socket failed to initialize within timeout: %v", err)
-			runtime.EventsEmit(b.ctx, "engine:status", "disconnected")
+			b.emit("engine:status", "disconnected")
 			return
 		}
 		if err := b.taskService.ReconcileSessionTasks(); err != nil {
@@ -73,6 +73,15 @@ func (b *WailsBridge) OnStartup(ctx context.Context) {
 		b.startTelemetryLoop()
 	}()
 
+	return nil
+}
+
+// ServiceShutdown stops the telemetry loop when the application quits.
+func (b *WailsBridge) ServiceShutdown() error {
+	if b.cancel != nil {
+		b.cancel()
+	}
+	return nil
 }
 
 func (b *WailsBridge) startTelemetryLoop() {
@@ -87,15 +96,24 @@ func (b *WailsBridge) startTelemetryLoop() {
 			// Fetch fresh tasks and sync live aria2c progress data into SQLite
 			tasks, err := b.taskService.SyncAndGetAllTasks()
 			if err != nil {
-				runtime.EventsEmit(b.ctx, "engine:status", "disconnected")
+				b.emit("engine:status", "disconnected")
 				continue
 			}
 
 			// Broadcast live array bursts straight onto the SolidJS frontend
-			runtime.EventsEmit(b.ctx, "tasks:update", tasks)
-			runtime.EventsEmit(b.ctx, "engine:status", "running")
+			b.emit("tasks:update", tasks)
+			b.emit("engine:status", "running")
 		}
 	}
+}
+
+// emit publishes an application event to the frontend, if the app is running.
+func (b *WailsBridge) emit(name string, data ...any) {
+	app := application.Get()
+	if app == nil {
+		return
+	}
+	app.Event.Emit(name, data...)
 }
 
 // GetTasks queries, enriches with live aria2c data, and returns all task records
