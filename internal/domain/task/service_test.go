@@ -133,6 +133,9 @@ func TestTogglePauseTask_ToPaused(t *testing.T) {
 	// 1. Expect service to fetch the current task state
 	taskRepo.On("GetByID", taskID).Return(existingTask, nil)
 
+	// configRepo.Load is called internally by TogglePauseTask for the healing path
+	configRepo.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
+
 	// 2. Expect engine to pause the task via aria2c GID
 	engine.On("Pause", aria2GID).Return(nil)
 
@@ -142,9 +145,6 @@ func TestTogglePauseTask_ToPaused(t *testing.T) {
 	})).Return(nil)
 
 	service := task.NewTaskService(taskRepo, engine, configRepo)
-
-	// --- THIS WILL CAUSE A COMPILE ERROR (RED) ---
-	// TogglePauseTask does not exist yet
 	err := service.TogglePauseTask(taskID)
 	assert.NoError(t, err)
 
@@ -167,6 +167,10 @@ func TestTogglePauseTask_ToResume(t *testing.T) {
 	}
 
 	taskRepo.On("GetByID", taskID).Return(existingTask, nil)
+
+	// configRepo.Load is called internally by TogglePauseTask for the healing path
+	configRepo.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
+
 	engine.On("Unpause", aria2GID).Return(nil) // Should call Unpause when currently Paused
 	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
 		return t.ID == taskID && t.Status == task.StatusActive
@@ -186,6 +190,9 @@ func TestTogglePauseTask_InvalidState(t *testing.T) {
 	existingTask := &task.Task{ID: taskID, Status: task.StatusCompleted}
 
 	taskRepo.On("GetByID", taskID).Return(existingTask, nil)
+
+	// configRepo.Load is called before the switch statement, even for terminal states
+	configRepo.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
 
 	service := task.NewTaskService(taskRepo, engine, configRepo)
 	err := service.TogglePauseTask(taskID)
@@ -255,36 +262,110 @@ func TestTaskService_ReconcileSessionTasks_OrphanRecovery(t *testing.T) {
 
 	service := task.NewTaskService(mockRepo, mockEngine, mockConfig)
 
-	oldGID := "aria2_orphan_gid_001"
-	newGID := "aria2_refreshed_gid_999"
-	targetURL := "https://releases.cachyos.org/desktop/cachyos-desktop-linux.iso"
-	downloadDir := "/home/bal/Downloads"
-
-	// 1. Arrange: The database returns an active task whose GID has dropped out of aria2c memory
-	orphanTask := &task.Task{
-		ID:        "local_task_uuid_abc",
-		GID:       oldGID,
-		URL:       targetURL,
-		Status:    task.StatusActive,
-		CreatedAt: time.Now(),
+	// Setup: two tasks that are active/paused and should be in aria2c's queue
+	orphanActive := &task.Task{
+		ID:     "local_orphan_1",
+		GID:    "stale_gid_1",
+		URL:    "https://example.com/file1.zip",
+		Status: task.StatusActive,
 	}
-	mockRepo.On("GetAll").Return([]*task.Task{orphanTask}, nil)
-	mockConfig.On("Load").Return(&config.AppConfig{DefaultDownloadPath: downloadDir}, nil)
+	orphanPaused := &task.Task{
+		ID:     "local_orphan_2",
+		GID:    "stale_gid_2",
+		URL:    "https://example.com/file2.zip",
+		Status: task.StatusPaused,
+	}
 
-	// 2. Expect: The reconciler checks the daemon, which throws an error ("GID not found")
-	mockEngine.On("TellStatus", oldGID).Return((*task.Aria2Status)(nil), errors.New("GID not found"))
+	mockConfig.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
 
-	// 3. Expect: The service catches the failure, calls AddURI to re-register the item, and persists the new GID
-	mockEngine.On("AddURI", targetURL, downloadDir).Return(newGID, nil)
+	// Both tasks are "orphaned" — aria2c no longer knows about them
+	mockRepo.On("GetAll").Return([]*task.Task{orphanActive, orphanPaused}, nil)
+	mockEngine.On("TellStatus", "stale_gid_1").Return(nil, errors.New("GID stale_gid_1 is not found"))
+	mockEngine.On("TellStatus", "stale_gid_2").Return(nil, errors.New("GID stale_gid_2 is not found"))
+
+	// Engine should re-inject both URLs so the downloads can resume
+	mockEngine.On("AddURI", orphanActive.URL, "/downloads").Return("new_gid_1", nil)
+	mockEngine.On("AddURI", orphanPaused.URL, "/downloads").Return("new_gid_2", nil)
+
+	// Repo should be updated with the new GIDs
 	mockRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
-		return t.ID == "local_task_uuid_abc" && t.GID == newGID && t.Status == task.StatusActive
+		return t.ID == "local_orphan_1" && t.GID == "new_gid_1"
+	})).Return(nil)
+	mockRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == "local_orphan_2" && t.GID == "new_gid_2"
 	})).Return(nil)
 
-	// 🛠️ Action Execution
 	err := service.ReconcileSessionTasks()
 
-	// Assertions Verification
 	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 	mockEngine.AssertExpectations(t)
+	mockConfig.AssertExpectations(t)
+}
+
+func TestTaskService_ReconcileSessionTasks_EngineFailure(t *testing.T) {
+	mockRepo := new(TaskRepositoryMock)
+	mockEngine := new(DownloadEngineMock)
+	mockConfig := new(ConfigRepositoryMock)
+
+	service := task.NewTaskService(mockRepo, mockEngine, mockConfig)
+
+	orphanTask := &task.Task{
+		ID:     "local_fail",
+		GID:    "stale_gid_fail",
+		URL:    "https://example.com/fail.zip",
+		Status: task.StatusActive,
+	}
+
+	mockConfig.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
+	mockRepo.On("GetAll").Return([]*task.Task{orphanTask}, nil)
+
+	// aria2c does not know about this GID
+	mockEngine.On("TellStatus", "stale_gid_fail").Return(nil, errors.New("GID stale_gid_fail is not found"))
+
+	// Re-injection also fails (e.g. aria2c is down)
+	mockEngine.On("AddURI", orphanTask.URL, "/downloads").Return("", errors.New("connection refused"))
+
+	// Task should be marked as error in the DB
+	mockRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == "local_fail" && t.Status == task.StatusError
+	})).Return(nil)
+
+	err := service.ReconcileSessionTasks()
+
+	// The function should not propagate this error — it logs and continues
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+	mockEngine.AssertExpectations(t)
+}
+
+func TestTaskService_ReconcileSessionTasks_SkipsTerminalStates(t *testing.T) {
+	mockRepo := new(TaskRepositoryMock)
+	mockEngine := new(DownloadEngineMock)
+	mockConfig := new(ConfigRepositoryMock)
+
+	service := task.NewTaskService(mockRepo, mockEngine, mockConfig)
+
+	completedTask := &task.Task{
+		ID:     "local_done",
+		GID:    "done_gid",
+		Status: task.StatusCompleted,
+		CreatedAt: time.Now(),
+	}
+	errorTask := &task.Task{
+		ID:     "local_err",
+		GID:    "error_gid",
+		Status: task.StatusError,
+		CreatedAt: time.Now(),
+	}
+
+	mockConfig.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
+	mockRepo.On("GetAll").Return([]*task.Task{completedTask, errorTask}, nil)
+
+	err := service.ReconcileSessionTasks()
+
+	assert.NoError(t, err)
+
+	// TellStatus must NEVER be called for terminal states
+	mockEngine.AssertNotCalled(t, "TellStatus", mock.Anything)
 }
