@@ -1,45 +1,56 @@
 # AriaDM
 
-Aria2 download manager desktop application built with Wails v3, SolidJS, and TypeScript.
+A desktop download manager for Aria2. The desktop app is built with Wails v3 and SolidJS, and a browser extension sends downloads from your browser to the app.
 
 ## Requirements
 
-- Go 1.26+
-- Bun 1.4+
-- Wails v3 CLI (`go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0`)
-- The native webview dependencies required by Wails for your platform
+- Go 1.26 or newer
+- Bun 1.4 or newer
+- The Wails v3 CLI
+- The webview libraries Wails needs for your operating system
 
-## Setup
-
-```bash
-make deps    # Go modules + all Bun workspace dependencies
-make tools   # golangci-lint, JavaScript tooling, and Lefthook git hooks
-```
-
-## Development
+Install the Wails CLI with:
 
 ```bash
-make dev      # Wails live development mode
-make build    # Production build for the current OS
-make test     # Go unit tests
-make check    # Format check, lint, typecheck, and tests
+go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0
 ```
 
-The underlying build pipeline lives in `Taskfile.yml` and can be run directly with
-`wails3 task <name>` (for example `wails3 task build`).
+## Run it locally
 
-## Workspace layout
+```bash
+make deps
+make tools
+make dev
+```
 
-- Root Go module: Wails v3 application and backend services.
-- `frontend/`: SolidJS UI embedded in the desktop app.
-- `web-extension/`: browser extension integration.
-- `frontend/` and `web-extension/` are managed as Bun workspaces with a single
-  root `bun.lock` and hoisted `node_modules`.
+`make deps` installs the Go and JavaScript dependencies. `make tools` adds the linters and git hooks. `make dev` starts the app with live reload.
 
-## Tooling
+## Build
 
-- `oxlint` for JavaScript/TypeScript linting.
-- `oxfmt` for JavaScript/TypeScript formatting.
-- `golangci-lint` for Go linting (`make lint`).
-- `bun check` for fast native TypeScript type checking.
-- `lefthook` for pre-commit formatting/linting and pre-push checks.
+```bash
+make build
+```
+
+The binary is written to `bin/`.
+
+## Other commands
+
+| Command | Purpose |
+| --- | --- |
+| `make test` | Run the Go tests |
+| `make check` | Check formatting, lint, types, and tests |
+| `make fmt` | Format Go and frontend code |
+| `make clean` | Remove build output |
+
+## Project layout
+
+- `main.go`, `app.go`, `internal/`: desktop app and Aria2 integration
+- `frontend/`: SolidJS interface used by the desktop app
+- `web-extension/`: browser extension
+- `build/`: packaging files and platform assets
+
+The build pipeline lives in `Taskfile.yml`. You can run the tasks directly with `wails3 task <name>`; `make` is the shorter path.
+
+## Before opening a pull request
+
+Run `make check`. It covers formatting, linting, type checking, and the Go test suite.
