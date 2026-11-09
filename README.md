@@ -2,6 +2,15 @@
 
 A desktop download manager for Aria2. The desktop app is built with Wails v3 and SolidJS, and a browser extension sends downloads from your browser to the app.
 
+![Go 1.26](https://shieldcn.dev/badge/Go-1.26-00ADD8.svg?logo=go&logoColor=white)
+![Wails v3](https://shieldcn.dev/badge/Wails-v3-E34F26.svg?logo=wails&logoColor=white)
+![SolidJS 1.9](https://shieldcn.dev/badge/SolidJS-1.9-2C4F7C.svg?logo=solid&logoColor=white)
+![TypeScript 6.0](https://shieldcn.dev/badge/TypeScript-6.0-3178C6.svg?logo=typescript&logoColor=white)
+![Bun 1.4](https://shieldcn.dev/badge/Bun-1.4-000000.svg?logo=bun&logoColor=white)
+![Vite 8](https://shieldcn.dev/badge/Vite-8-646CFF.svg?logo=vite&logoColor=white)
+![Tailwind CSS v3 and v4](https://shieldcn.dev/badge/Tailwind_CSS-v3_%2B_v4-06B6D4.svg?logo=tailwindcss&logoColor=white)
+![Aria2](https://shieldcn.dev/badge/Aria2-downloads-009688.svg?logo=aria2&logoColor=white)
+
 ## Requirements
 
 - Go 1.26 or newer
