@@ -30,11 +30,14 @@ tasks:
       - npm install
 
   install:frontend:deps:bun:
-    dir: frontend
+    # The repository uses Bun workspaces, so dependencies must be installed
+    # from the workspace root rather than the frontend directory.
+    dir: .
     sources:
       - package.json
       - bun.lock
-      - bun.lockb
+      - frontend/package.json
+      - web-extension/package.json
     generates:
       - node_modules
     preconditions:

@@ -6,10 +6,8 @@
     "lib": ["ES2023", "DOM"],
     "types": ["vite/client"],
     "skipLibCheck": true,
-    "ignoreDeprecations": "6.0",
 
     /* Path Aliasing Mapping */
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     },

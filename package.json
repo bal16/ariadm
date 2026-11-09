@@ -1,0 +1,30 @@
+{
+  "name": "ariadm",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "web-extension"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "bun --filter '@ariadm/frontend' build && bun --filter '@ariadm/web-extension' build",
+    "dev:frontend": "bun --filter '@ariadm/frontend' dev",
+    "dev:web-extension": "bun --filter '@ariadm/web-extension' dev",
+    "typecheck": "bun --filter '*' typecheck",
+    "lint": "bunx oxlint frontend/src web-extension/src",
+    "lint:fix": "bunx oxlint --fix frontend/src web-extension/src",
+    "format": "bunx oxfmt frontend/src web-extension/src",
+    "format:check": "bunx oxfmt --check frontend/src web-extension/src",
+    "hooks:install": "lefthook install"
+  },
+  "devDependencies": {
+    "lefthook": "^2.2.2",
+    "oxfmt": "^0.77.0",
+    "oxlint": "^1.92.0"
+  },
+  "trustedDependencies": [
+    "lefthook",
+    "spawn-sync"
+  ]
+}

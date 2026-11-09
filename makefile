@@ -2,7 +2,7 @@
 BINARY_NAME=ariadm
 FRONTEND_DIR=frontend
 
-.PHONY: all help deps test dev build build-windows build-mac clean
+.PHONY: all help deps tools fmt fmt-check lint typecheck check test dev build build-windows build-mac clean
 
 all: help
 
@@ -13,12 +13,41 @@ help:
 	@echo "Targets:"
 	@sed -n 's/^##//p' Makefile | column -t -s ':' |  sed -e 's/^/ /'
 
-## deps: Download Go modules and install frontend dependencies
+## deps: Download Go modules and install all Bun workspace dependencies
 deps:
 	@echo "==> Downloading Go dependencies..."
 	go mod download
-	@echo "==> Installing frontend dependencies with Bun..."
-	cd $(FRONTEND_DIR) && bun install
+	@echo "==> Installing workspace dependencies with Bun..."
+	bun install
+
+## tools: Install the linting and git-hook toolchain
+tools:
+	@echo "==> Installing golangci-lint..."
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
+	@echo "==> Installing JavaScript tooling..."
+	bun install
+	@echo "==> Installing Lefthook git hooks..."
+	bunx lefthook install
+
+## fmt: Format Go and frontend sources
+fmt:
+	wails3 task fmt
+
+## fmt-check: Verify formatting without writing files
+fmt-check:
+	wails3 task fmt:check
+
+## lint: Run Go and frontend linters
+lint:
+	wails3 task lint
+
+## typecheck: Type-check the frontend workspaces with Bun
+typecheck:
+	wails3 task typecheck
+
+## check: Run formatting checks, lint, typecheck, and tests
+check:
+	wails3 task check
 
 ## test: Run all backend unit tests (TDD workflow)
 test:
@@ -59,3 +88,4 @@ clean:
 	rm -rf bin/*
 	rm -rf build/bin/*
 	rm -rf $(FRONTEND_DIR)/dist
+	rm -rf web-extension/dist

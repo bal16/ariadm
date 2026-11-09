@@ -37,6 +37,42 @@ tasks:
     cmds:
       - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
 
+  fmt:
+    summary: Formats Go and frontend sources
+    cmds:
+      - gofmt -w .
+      - bunx oxfmt frontend/src web-extension/src
+
+  fmt:check:
+    summary: Verifies Go and frontend formatting
+    cmds:
+      - sh -c 'files="$(gofmt -l .)"; if [ -n "$files" ]; then printf "%s\n" "$files"; exit 1; fi'
+      - bunx oxfmt --check frontend/src web-extension/src
+
+  lint:
+    summary: Runs Go and frontend linters
+    cmds:
+      - golangci-lint run
+      - bunx oxlint frontend/src web-extension/src
+
+  typecheck:
+    summary: Type-checks the frontend workspaces with Bun
+    cmds:
+      - bun run typecheck
+
+  test:
+    summary: Runs backend unit tests
+    cmds:
+      - go test ./internal/...
+
+  check:
+    summary: Runs formatting checks, lint, typecheck, and tests
+    cmds:
+      - task: fmt:check
+      - task: lint
+      - task: typecheck
+      - task: test
+
   install:msix:tools:
     summary: Installs tools required for Windows MSIX packaging
     cmds:

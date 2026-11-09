@@ -1,12 +1,13 @@
 {
-  "name": "frontend",
-  "private": true,
+  "name": "@ariadm/frontend",
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build:dev": "vite build --minify false --mode development",
     "build": "tsc -b && vite build --mode production",
+    "typecheck": "bun check",
     "preview": "vite preview"
   },
   "dependencies": {
