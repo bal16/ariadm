@@ -51,7 +51,7 @@ export function Preferences(props: { onClose: () => void }) {
             <button
               type="button"
               onClick={props.onClose}
-              class="text-muted-foreground hover:text-destructive-foreground hover:bg-destructive text-[10px] h-4 w-5 flex items-center justify-center rounded-sm transition-colors focus:outline-none"
+              class="text-muted-foreground hover:text-destructive-foreground hover:bg-destructive text-[10px] h-4 w-5 flex items-center justify-center rounded-sm transition-colors focus:outline-hidden"
             >
               <X class="h-3 w-3" />
             </button>
@@ -71,7 +71,7 @@ export function Preferences(props: { onClose: () => void }) {
                     onClick={() => setActiveTab(tab.id)}
                     class={`flex items-center space-x-2 px-2.5 py-1.5 text-left text-xs rounded-sm font-medium select-none border transition-all ${
                       activeTab() === tab.id
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
                         : "text-muted-foreground border-transparent hover:bg-muted/60 hover:text-foreground"
                     }`}
                   >
@@ -98,7 +98,7 @@ export function Preferences(props: { onClose: () => void }) {
             >
               <div class="space-y-3.5">
                 <Show when={errorMsg()}>
-                  <div class="p-2 bg-destructive/10 border border-destructive/20 text-destructive text-[11px] font-mono rounded">
+                  <div class="p-2 bg-destructive/10 border border-destructive/20 text-destructive text-[11px] font-mono rounded-sm">
                     Error: {errorMsg()}
                   </div>
                 </Show>
@@ -115,7 +115,7 @@ export function Preferences(props: { onClose: () => void }) {
                       </label>
                       <input
                         type="text"
-                        class="w-full px-2 py-1 text-xs border border-input bg-background text-foreground rounded font-mono focus:outline-none focus:ring-1 focus:ring-ring"
+                        class="w-full px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
                         value={appConfig()?.default_download_path || ""}
                         onInput={(e) =>
                           mutate({
@@ -133,7 +133,7 @@ export function Preferences(props: { onClose: () => void }) {
                         type="number"
                         min="1"
                         max="10"
-                        class="w-20 px-2 py-1 text-xs border border-input bg-background text-foreground rounded font-mono focus:outline-none focus:ring-1 focus:ring-ring"
+                        class="w-20 px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
                         value={appConfig()?.max_concurrent_tasks || 3}
                         onInput={(e) =>
                           mutate({
@@ -158,7 +158,7 @@ export function Preferences(props: { onClose: () => void }) {
                       </label>
                       <input
                         type="number"
-                        class="w-36 px-2 py-1 text-xs border border-input bg-background text-foreground rounded font-mono focus:outline-none focus:ring-1 focus:ring-ring"
+                        class="w-36 px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
                         value={appConfig()?.speed_limit || 0}
                         onInput={(e) =>
                           mutate({
@@ -180,7 +180,7 @@ export function Preferences(props: { onClose: () => void }) {
                     <label class="flex items-center space-x-2 mt-1 cursor-pointer select-none">
                       <input
                         type="checkbox"
-                        class="rounded border-input bg-background text-primary focus:ring-ring h-3.5 w-3.5"
+                        class="rounded-sm border-input bg-background text-primary focus:ring-ring h-3.5 w-3.5"
                         checked={appConfig()?.minimize_to_tray || false}
                         onChange={(e) =>
                           mutate({
@@ -209,7 +209,7 @@ export function Preferences(props: { onClose: () => void }) {
                 <button
                   type="submit"
                   disabled={isSaving()}
-                  class="px-3 py-1 text-xs bg-primary text-primary-foreground font-semibold rounded-sm hover:bg-primary/90 disabled:opacity-50 shadow-sm flex items-center space-x-1 transition-colors"
+                  class="px-3 py-1 text-xs bg-primary text-primary-foreground font-semibold rounded-sm hover:bg-primary/90 disabled:opacity-50 shadow-xs flex items-center space-x-1 transition-colors"
                 >
                   <Save class="h-3 w-3" />
                   <span>{isSaving() ? "Applying..." : "Apply"}</span>

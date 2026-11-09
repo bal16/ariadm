@@ -30,7 +30,7 @@ export function DeleteConfirmDialog(props: {
           <label class="flex items-center space-x-2 mt-2 cursor-pointer select-none">
             <input
               type="checkbox"
-              class="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+              class="rounded-sm border-input text-primary focus:ring-primary h-3.5 w-3.5"
               checked={deleteFiles()}
               onChange={(e) => setDeleteFiles(e.currentTarget.checked)}
               disabled={props.isDeleting}
@@ -53,7 +53,7 @@ export function DeleteConfirmDialog(props: {
               type="button"
               onClick={() => props.onConfirm(deleteFiles())}
               disabled={props.isDeleting}
-              class="px-3 py-1 text-xs bg-destructive text-destructive-foreground font-semibold rounded-sm hover:bg-destructive/90 disabled:opacity-50 shadow-sm flex items-center space-x-1 transition-colors"
+              class="px-3 py-1 text-xs bg-destructive text-destructive-foreground font-semibold rounded-sm hover:bg-destructive/90 disabled:opacity-50 shadow-xs flex items-center space-x-1 transition-colors"
             >
               <Trash2 class="h-3 w-3" />
               <span>{props.isDeleting ? "Deleting..." : "Delete Task"}</span>

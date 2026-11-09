@@ -21,7 +21,7 @@ export function DownloadList(props: DownloadListProps) {
     <div class="w-full flex flex-col h-full bg-background border border-border rounded-md overflow-hidden">
       <div class="flex-1 overflow-auto text-xs">
         <table class="w-full border-collapse text-left select-none">
-          <thead class="sticky top-0 bg-muted/60 backdrop-blur-sm text-muted-foreground border-b border-border font-medium select-none z-10">
+          <thead class="sticky top-0 bg-muted/60 backdrop-blur-xs text-muted-foreground border-b border-border font-medium select-none z-10">
             <tr>
               <th class="p-2 w-7 text-center"></th>
               <th class="p-2 font-medium">File Name</th>
@@ -129,7 +129,7 @@ export function DownloadList(props: DownloadListProps) {
                           <button
                             type="button"
                             onClick={() => props.onTogglePause(item.id)}
-                            class="p-1 rounded border border-border bg-background hover:bg-muted text-foreground transition-all active:scale-95"
+                            class="p-1 rounded-sm border border-border bg-background hover:bg-muted text-foreground transition-all active:scale-95"
                           >
                             {item.status === "active" ? (
                               <Pause class="h-3 w-3 text-amber-500 fill-amber-500/20" />
@@ -141,7 +141,7 @@ export function DownloadList(props: DownloadListProps) {
                         <button
                           type="button"
                           onClick={() => props.onDelete(item.id)}
-                          class="p-1 rounded border border-border bg-background hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all active:scale-95"
+                          class="p-1 rounded-sm border border-border bg-background hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all active:scale-95"
                         >
                           <Trash2 class="h-3 w-3" />
                         </button>

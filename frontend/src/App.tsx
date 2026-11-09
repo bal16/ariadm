@@ -167,7 +167,7 @@ export default function App() {
         <DropdownMenu>
           <DropdownMenuTrigger
             as="button"
-            class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-none"
+            class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-hidden"
           >
             File
           </DropdownMenuTrigger>
@@ -186,7 +186,7 @@ export default function App() {
         <DropdownMenu>
           <DropdownMenuTrigger
             as="button"
-            class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-none"
+            class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-hidden"
           >
             View
           </DropdownMenuTrigger>
@@ -227,7 +227,7 @@ export default function App() {
         <DropdownMenu>
           <DropdownMenuTrigger
             as="button"
-            class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-none"
+            class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-hidden"
           >
             Tools
           </DropdownMenuTrigger>
@@ -254,7 +254,7 @@ export default function App() {
           <Button
             onClick={() => setShowAddTask(true)}
             size="sm"
-            class="h-7 px-2.5 text-xs bg-primary text-primary-foreground font-semibold rounded shadow-sm hover:opacity-90 flex items-center space-x-1"
+            class="h-7 px-2.5 text-xs bg-primary text-primary-foreground font-semibold rounded-sm shadow-xs hover:opacity-90 flex items-center space-x-1"
           >
             <Plus class="h-3.5 w-3.5" />
             <span>New Task</span>
@@ -262,7 +262,7 @@ export default function App() {
           {/* <Button
             size="sm"
             variant="outline"
-            class="h-7 px-2.5 text-xs border border-border bg-background text-foreground rounded hover:bg-muted flex items-center space-x-1"
+            class="h-7 px-2.5 text-xs border border-border bg-background text-foreground rounded-sm hover:bg-muted flex items-center space-x-1"
           >
             <Pause class="h-3.5 w-3.5 text-muted-foreground" />
             <span>Pause All</span>
@@ -270,7 +270,7 @@ export default function App() {
           <Button
             size="sm"
             variant="outline"
-            class="h-7 px-2.5 text-xs border border-border bg-background text-foreground rounded hover:bg-muted flex items-center space-x-1"
+            class="h-7 px-2.5 text-xs border border-border bg-background text-foreground rounded-sm hover:bg-muted flex items-center space-x-1"
           >
             <Play class="h-3.5 w-3.5 text-muted-foreground" />
             <span>Resume All</span>
@@ -281,7 +281,7 @@ export default function App() {
           <input
             type="text"
             placeholder="Search tasks..."
-            class="pl-7 pr-2 py-1 h-7 text-xs border border-input bg-background text-foreground rounded font-mono w-48 focus:outline-none focus:ring-1 focus:ring-ring"
+            class="pl-7 pr-2 py-1 h-7 text-xs border border-input bg-background text-foreground rounded-sm font-mono w-48 focus:outline-hidden focus:ring-1 focus:ring-ring"
           />
         </div>
       </div>

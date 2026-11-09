@@ -40,7 +40,7 @@ export function AddTaskDialog(props: { onClose: () => void }) {
           <button
             type="button"
             onClick={props.onClose}
-            class="text-muted-foreground hover:text-destructive-foreground hover:bg-destructive text-[10px] h-4 w-5 flex items-center justify-center rounded-sm transition-colors focus:outline-none"
+            class="text-muted-foreground hover:text-destructive-foreground hover:bg-destructive text-[10px] h-4 w-5 flex items-center justify-center rounded-sm transition-colors focus:outline-hidden"
           >
             <X class="h-3 w-3" />
           </button>
@@ -63,7 +63,7 @@ export function AddTaskDialog(props: { onClose: () => void }) {
               type="text"
               autofocus
               placeholder="Paste download path link address here..."
-              class="w-full px-3 py-1.5 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-none focus:ring-1 focus:ring-ring"
+              class="w-full px-3 py-1.5 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
               value={url()}
               onInput={(e) => setUrl(e.currentTarget.value)}
               disabled={isSubmitting()}
@@ -87,7 +87,7 @@ export function AddTaskDialog(props: { onClose: () => void }) {
             <button
               type="submit"
               disabled={isSubmitting()}
-              class="px-3 py-1 text-xs bg-primary text-primary-foreground font-semibold rounded-sm hover:bg-primary/90 disabled:opacity-50 shadow-sm flex items-center space-x-1 transition-colors"
+              class="px-3 py-1 text-xs bg-primary text-primary-foreground font-semibold rounded-sm hover:bg-primary/90 disabled:opacity-50 shadow-xs flex items-center space-x-1 transition-colors"
             >
               <Download class="h-3 w-3" />
               <span>{isSubmitting() ? "Validating..." : "Launch"}</span>

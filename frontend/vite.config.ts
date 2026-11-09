@@ -1,11 +1,12 @@
 import path from "node:path";
 
+import tailwindcss from "@tailwindcss/vite";
 import wails from "@wailsio/runtime/plugins/vite";
 import solid from "vite-plugin-solid";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [solid(), wails("./bindings")],
+  plugins: [tailwindcss(), solid(), wails("./bindings")],
   base: "./",
   server: {
     host: "127.0.0.1",
