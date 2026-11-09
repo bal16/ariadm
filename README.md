@@ -8,7 +8,7 @@ A desktop download manager for Aria2. The desktop app is built with Wails v3 and
 ![TypeScript 6.0](https://shieldcn.dev/badge/TypeScript-6.0-3178C6.svg?logo=typescript&logoColor=white)
 ![Bun 1.4](https://shieldcn.dev/badge/Bun-1.4-000000.svg?logo=bun&logoColor=white)
 ![Vite 8](https://shieldcn.dev/badge/Vite-8-646CFF.svg?logo=vite&logoColor=white)
-![Tailwind CSS v3 and v4](https://shieldcn.dev/badge/Tailwind_CSS-v3_%2B_v4-06B6D4.svg?logo=tailwindcss&logoColor=white)
+![Tailwind CSS v4](https://shieldcn.dev/badge/Tailwind_CSS-v4-06B6D4.svg?logo=tailwindcss&logoColor=white)
 ![Aria2](https://shieldcn.dev/badge/Aria2-downloads-009688.svg?logo=aria2&logoColor=white)
 
 ## Requirements
