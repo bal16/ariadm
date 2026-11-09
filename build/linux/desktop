@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=AriaDM
+Comment=Aria2 download manager
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/ariadm %u
+Terminal=false
+Type=Application
+Icon=ariadm
+Categories=Utility;
+StartupWMClass=ariadm
+
+ 

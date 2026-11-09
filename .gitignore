@@ -1,7 +1,13 @@
+/bin
 build/bin
 node_modules
 frontend/dist
 generated
+.task
+
+# Wails v3 platform build artifacts
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 
 *.db
 *.log

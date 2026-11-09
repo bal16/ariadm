@@ -17,8 +17,8 @@ help:
 deps:
 	@echo "==> Downloading Go dependencies..."
 	go mod download
-	@echo "==> Installing frontend dependencies..."
-	cd $(FRONTEND_DIR) && npm install
+	@echo "==> Installing frontend dependencies with Bun..."
+	cd $(FRONTEND_DIR) && bun install
 
 ## test: Run all backend unit tests (TDD workflow)
 test:
@@ -36,25 +36,26 @@ test/watch:
 ## dev: Run the application in Wails development mode (hot-reloading)
 dev:
 	@echo "==> Starting Wails development server..."
-	APP_ENV=development wails dev
+	APP_ENV=development wails3 task dev
 
 ## build: Build the production application for the current host OS
 build:
 	@echo "==> Building production application for host OS..."
-	wails build -clean
+	wails3 task build
 
 ## build-windows: Cross-compile the production application for Windows
 build-windows:
 	@echo "==> Building production application for Windows..."
-	wails build -platform windows/amd64 -clean
+	wails3 task build GOOS=windows ARCH=amd64
 
 ## build-mac: Cross-compile the production application for macOS (Universal binary)
 build-mac:
 	@echo "==> Building production application for macOS..."
-	wails build -platform darwin/universal -clean
+	wails3 task darwin:build:universal
 
 ## clean: Remove build artifacts and temporary files
 clean:
 	@echo "==> Cleaning build artifacts..."
+	rm -rf bin/*
 	rm -rf build/bin/*
 	rm -rf $(FRONTEND_DIR)/dist
