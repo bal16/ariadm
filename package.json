@@ -4,7 +4,8 @@
   "private": true,
   "workspaces": [
     "frontend",
-    "web-extension"
+    "web-extension",
+    "packages/*"
   ],
   "type": "module",
   "scripts": {

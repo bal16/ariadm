@@ -1,0 +1,17 @@
+{
+  "name": "@ariadm/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./theme.css": "./src/theme.css",
+    "./utils": "./src/utils.ts"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.6.0"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^4.3.0"
+  }
+}
