@@ -138,8 +138,7 @@ export function Preferences(props: { onClose: () => void }) {
                         onInput={(e) =>
                           mutate({
                             ...appConfig()!,
-                            max_concurrent_tasks:
-                              parseInt(e.currentTarget.value) || 1,
+                            max_concurrent_tasks: parseInt(e.currentTarget.value) || 1,
                           })
                         }
                       />

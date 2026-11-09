@@ -2,7 +2,7 @@ package config
 
 type AppConfig struct {
 	DefaultDownloadPath string `json:"default_download_path"`
-	SpeedLimit          int64  `json:"speed_limit"`          // in bytes per second (0 means unlimited)
+	SpeedLimit          int64  `json:"speed_limit"` // in bytes per second (0 means unlimited)
 	MaxConcurrentTasks  int    `json:"max_concurrent_tasks"`
 	MinimizeToTray      bool   `json:"minimize_to_tray"`
 }

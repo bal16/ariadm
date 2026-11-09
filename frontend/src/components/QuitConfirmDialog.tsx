@@ -18,10 +18,8 @@ export function QuitConfirmDialog(props: {
 
         {/* Body */}
         <div class="p-4 bg-background space-y-4">
-          <p class="text-sm text-foreground font-medium">
-            How would you like to close AriaDM?
-          </p>
-          
+          <p class="text-sm text-foreground font-medium">How would you like to close AriaDM?</p>
+
           <div class="grid grid-cols-2 gap-2 mt-2">
             <button
               onClick={props.onBackground}

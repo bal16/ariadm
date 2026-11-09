@@ -21,11 +21,10 @@ export function DeleteConfirmDialog(props: {
 
         {/* Body */}
         <div class="p-4 bg-background space-y-3">
-          <p class="text-sm text-foreground">
-            Are you sure you want to delete this task?
-          </p>
+          <p class="text-sm text-foreground">Are you sure you want to delete this task?</p>
           <p class="text-[11px] text-muted-foreground">
-            This action cannot be undone. The task will be removed from your download list and the active daemon.
+            This action cannot be undone. The task will be removed from your download list and the
+            active daemon.
           </p>
 
           <label class="flex items-center space-x-2 mt-2 cursor-pointer select-none">

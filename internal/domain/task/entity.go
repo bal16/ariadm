@@ -14,9 +14,9 @@ var (
 
 const (
 	StatusWaiting   Status = "waiting"
-	StatusActive    Status = "active"    // Maps to aria2c "active" status
+	StatusActive    Status = "active" // Maps to aria2c "active" status
 	StatusPaused    Status = "paused"
-	StatusCompleted Status = "complete"  // aria2c uses "complete" not "completed"
+	StatusCompleted Status = "complete" // aria2c uses "complete" not "completed"
 	StatusError     Status = "error"
 )
 

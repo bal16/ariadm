@@ -44,9 +44,7 @@ export default function App() {
   const [isDeleting, setIsDeleting] = createSignal(false);
   const [engineStatus, setEngineStatus] = createSignal("Connecting");
   const [tasks, setTasks] = createStore<Task[]>([]);
-  const [themePref, setThemePref] = createSignal(
-    localStorage.getItem("ariadm-theme") || "system",
-  );
+  const [themePref, setThemePref] = createSignal(localStorage.getItem("ariadm-theme") || "system");
 
   const handleThemeChange = (theme: "light" | "dark" | "system") => {
     setColorMode(theme);
@@ -55,10 +53,7 @@ export default function App() {
 
   // Calculate live cumulative download speeds from active tasks
   const totalDownloadSpeed = () => {
-    return tasks.reduce(
-      (acc, t) => acc + (t.status === "active" ? t.speed : 0),
-      0,
-    );
+    return tasks.reduce((acc, t) => acc + (t.status === "active" ? t.speed : 0), 0);
   };
 
   // Convert raw speed numbers into scannable text updates
@@ -67,9 +62,7 @@ export default function App() {
     const k = 1024;
     const sizes = ["B/s", "KB/s", "MB/s", "GB/s"];
     const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
-    return (
-      parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-    );
+    return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   onMount(async () => {
@@ -185,9 +178,7 @@ export default function App() {
             >
               <Plus class="h-3.5 w-3.5 text-muted-foreground" />
               <span class="flex-1">New Task</span>
-              <DropdownMenuShortcut class="font-mono text-[10px]">
-                Ctrl+N
-              </DropdownMenuShortcut>
+              <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+N</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -247,9 +238,7 @@ export default function App() {
             >
               <Settings class="h-3.5 w-3.5 text-muted-foreground" />
               <span class="flex-1">Preferences</span>
-              <DropdownMenuShortcut class="font-mono text-[10px]">
-                Ctrl+P
-              </DropdownMenuShortcut>
+              <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+P</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -299,11 +288,7 @@ export default function App() {
 
       {/* 3. Central Application Queue Workspace Area */}
       <div class="flex-1 p-2 bg-background/50 overflow-hidden">
-        <DownloadList
-          tasks={tasks}
-          onTogglePause={handleTogglePause}
-          onDelete={handleDelete}
-        />
+        <DownloadList tasks={tasks} onTogglePause={handleTogglePause} onDelete={handleDelete} />
       </div>
 
       {/* 4. Desktop System Status Footer Pin */}
@@ -313,9 +298,7 @@ export default function App() {
             <span
               class={`h-2 w-2 rounded-full ${engineStatus() === "Running" ? "bg-emerald-500 animate-pulse" : "bg-destructive"}`}
             ></span>
-            <span class="text-foreground font-medium">
-              Engine: {engineStatus()}
-            </span>
+            <span class="text-foreground font-medium">Engine: {engineStatus()}</span>
           </div>
           <span class="text-muted-foreground/40">│</span>
           <span>Session: 127.0.0.1:6800</span>

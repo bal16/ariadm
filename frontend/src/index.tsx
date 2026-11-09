@@ -7,11 +7,14 @@ import App from "./App.tsx";
 const root = document.getElementById("root");
 const storageManager = createLocalStorageManager("ariadm-theme");
 
-render(() => (
-  <>
-    <ColorModeScript storageType={storageManager.type} />
-    <ColorModeProvider storageManager={storageManager}>
-      <App />
-    </ColorModeProvider>
-  </>
-), root!);
+render(
+  () => (
+    <>
+      <ColorModeScript storageType={storageManager.type} />
+      <ColorModeProvider storageManager={storageManager}>
+        <App />
+      </ColorModeProvider>
+    </>
+  ),
+  root!,
+);

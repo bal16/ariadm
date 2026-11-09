@@ -1,13 +1,5 @@
 import { For } from "solid-js";
-import {
-  Play,
-  Pause,
-  Trash2,
-  File,
-  CircleCheck,
-  Download,
-  CircleAlert,
-} from "lucide-solid";
+import { Play, Pause, Trash2, File, CircleCheck, Download, CircleAlert } from "lucide-solid";
 import type { Task } from "~/../bindings/ariadm/internal/domain/task/models";
 
 const formatBytes = (bytes: number) => {
@@ -48,10 +40,7 @@ export function DownloadList(props: DownloadListProps) {
               each={props.tasks}
               fallback={
                 <tr>
-                  <td
-                    colspan="8"
-                    class="text-center py-20 text-muted-foreground font-sans text-xs"
-                  >
+                  <td colspan="8" class="text-center py-20 text-muted-foreground font-sans text-xs">
                     <Download class="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
                     No active transfers found in the local session queue.
                   </td>
@@ -63,12 +52,7 @@ export function DownloadList(props: DownloadListProps) {
                   item.total_length > 0
                     ? Math.min(
                         100,
-                        parseFloat(
-                          (
-                            (item.completed_length / item.total_length) *
-                            100
-                          ).toFixed(1),
-                        ),
+                        parseFloat(((item.completed_length / item.total_length) * 100).toFixed(1)),
                       )
                     : 0;
 
@@ -79,10 +63,8 @@ export function DownloadList(props: DownloadListProps) {
                         {item.status === "active" && (
                           <Download class="h-3.5 w-3.5 text-blue-500 animate-pulse" />
                         )}
-                        {item.status === "paused" && (
-                          <Pause class="h-3.5 w-3.5 text-amber-500" />
-                        )}
-                        {(item.status === "complete") && (
+                        {item.status === "paused" && <Pause class="h-3.5 w-3.5 text-amber-500" />}
+                        {item.status === "complete" && (
                           <CircleCheck class="h-3.5 w-3.5 text-emerald-500" />
                         )}
                         {item.status === "error" && (
@@ -93,17 +75,11 @@ export function DownloadList(props: DownloadListProps) {
 
                     <td class="p-2 font-sans text-xs text-foreground truncate max-w-xs font-medium flex items-center space-x-1.5">
                       <File class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <span class="truncate">
-                        {item.file_name || "Unknown Resource Payload"}
-                      </span>
+                      <span class="truncate">{item.file_name || "Unknown Resource Payload"}</span>
                     </td>
 
-                    <td class="p-2 text-muted-foreground">
-                      {formatBytes(item.total_length)}
-                    </td>
-                    <td class="p-2 text-muted-foreground">
-                      {formatBytes(item.completed_length)}
-                    </td>
+                    <td class="p-2 text-muted-foreground">{formatBytes(item.total_length)}</td>
+                    <td class="p-2 text-muted-foreground">{formatBytes(item.completed_length)}</td>
 
                     <td class="p-2 align-middle">
                       <div class="flex items-center space-x-2">
@@ -144,15 +120,12 @@ export function DownloadList(props: DownloadListProps) {
                     </td>
 
                     <td class="p-2 text-muted-foreground font-medium">
-                      {item.status === "active"
-                        ? `${formatBytes(item.speed)}/s`
-                        : "0 B/s"}
+                      {item.status === "active" ? `${formatBytes(item.speed)}/s` : "0 B/s"}
                     </td>
 
                     <td class="p-2 align-middle">
                       <div class="flex items-center space-x-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                        {(item.status === "active" ||
-                          item.status === "paused") && (
+                        {(item.status === "active" || item.status === "paused") && (
                           <button
                             type="button"
                             onClick={() => props.onTogglePause(item.id)}

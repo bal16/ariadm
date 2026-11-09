@@ -11,8 +11,7 @@ browser.downloads.onCreated.addListener(async (downloadItem) => {
   // Get the service status, defaulting to `true` if not set.
   const data = await browser.storage.local.get({ serviceEnabled: true });
   // Handle legacy `1` value as well as modern boolean.
-  const serviceEnabled =
-    data.serviceEnabled === true || data.serviceEnabled === 1;
+  const serviceEnabled = data.serviceEnabled === true || data.serviceEnabled === 1;
 
   if (!serviceEnabled) {
     return;

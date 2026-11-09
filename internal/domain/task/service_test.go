@@ -347,15 +347,15 @@ func TestTaskService_ReconcileSessionTasks_SkipsTerminalStates(t *testing.T) {
 	service := task.NewTaskService(mockRepo, mockEngine, mockConfig)
 
 	completedTask := &task.Task{
-		ID:     "local_done",
-		GID:    "done_gid",
-		Status: task.StatusCompleted,
+		ID:        "local_done",
+		GID:       "done_gid",
+		Status:    task.StatusCompleted,
 		CreatedAt: time.Now(),
 	}
 	errorTask := &task.Task{
-		ID:     "local_err",
-		GID:    "error_gid",
-		Status: task.StatusError,
+		ID:        "local_err",
+		GID:       "error_gid",
+		Status:    task.StatusError,
 		CreatedAt: time.Now(),
 	}
 

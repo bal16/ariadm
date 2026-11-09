@@ -71,9 +71,8 @@ export function AddTaskDialog(props: { onClose: () => void }) {
           </div>
 
           <div class="text-[10px] text-muted-foreground font-mono bg-muted/30 border border-border p-2 rounded-sm select-none">
-            ℹ️ Links are validated instantly against backend structural regex
-            patterns before routing down to the active aria2 execution daemon
-            stream.
+            ℹ️ Links are validated instantly against backend structural regex patterns before
+            routing down to the active aria2 execution daemon stream.
           </div>
 
           <div class="flex justify-end space-x-1.5 pt-2 border-t border-border">
