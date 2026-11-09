@@ -56,7 +56,7 @@ func main() {
 		log.Printf("Local HTTP Server is listening on http://127.0.0.1:%s", PORT)
 	}
 
-	defer localHTTPServer.Stop()
+	defer func() { _ = localHTTPServer.Stop() }()
 
 	// 4. Launch the Wails Desktop Shell Application Window
 	appService := NewApp()

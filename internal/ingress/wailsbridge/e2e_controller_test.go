@@ -55,7 +55,7 @@ func setupTrueE2EContext(t *testing.T) (*wailsbridge.WailsBridge, func()) {
 	appDir, err := database.ResolveAppDir(testAppName)
 	require.NoError(t, err)
 	fullDBPath := filepath.Join(appDir, testDBFile)
-	os.Remove(fullDBPath) // Wipe dirty historical databases
+	_ = os.Remove(fullDBPath) // Wipe dirty historical databases
 
 	taskRepo, err := database.NewSQLiteTaskRepository(testAppName, testDBFile)
 	require.NoError(t, err)
@@ -73,11 +73,11 @@ func setupTrueE2EContext(t *testing.T) (*wailsbridge.WailsBridge, func()) {
 	teardown := func() {
 		// Stop the daemon process
 		if daemonCmd.Process != nil {
-			daemonCmd.Process.Kill()
-			daemonCmd.Wait()
+			_ = daemonCmd.Process.Kill()
+			_ = daemonCmd.Wait()
 		}
 		// Clear out the SQLite database file
-		os.Remove(fullDBPath)
+		_ = os.Remove(fullDBPath)
 	}
 
 	return bridge, teardown

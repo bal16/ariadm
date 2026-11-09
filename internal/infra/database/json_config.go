@@ -24,7 +24,9 @@ func NewJSONConfigRepository(appName string) (*JSONConfigRepository, error) {
 		filePath: filepath.Join(appDir, "config.json"),
 	}
 
-	repo.Load()
+	if _, err := repo.Load(); err != nil {
+		return nil, err
+	}
 
 	return repo, nil
 }

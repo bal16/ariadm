@@ -25,8 +25,8 @@ func TestSQLiteTaskRepository_Integration(t *testing.T) {
 	fullPath := filepath.Join(appDir, testDBPath)
 
 	// Clean before and after run execution
-	os.Remove(fullPath)
-	defer os.Remove(fullPath)
+	_ = os.Remove(fullPath)
+	defer func() { _ = os.Remove(fullPath) }()
 
 	repo, err := database.NewSQLiteTaskRepository(testAppName, testDBPath)
 	require.NoError(t, err)

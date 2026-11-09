@@ -62,7 +62,7 @@ func (c *Aria2Client) call(method string, params []interface{}) (json.RawMessage
 	if err != nil {
 		return nil, fmt.Errorf("rpc connection failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var rpcResp rpcResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rpcResp); err != nil {

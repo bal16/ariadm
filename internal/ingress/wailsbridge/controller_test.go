@@ -57,7 +57,7 @@ func setupIntegrationTest(t *testing.T) (*wailsbridge.WailsBridge, *MockDownload
 	fullPath := filepath.Join(appDir, testDBFile)
 
 	// Clean out any lingering databases from previous executions
-	os.Remove(fullPath)
+	_ = os.Remove(fullPath)
 
 	taskRepo, err := database.NewSQLiteTaskRepository(testAppName, testDBFile)
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func setupIntegrationTest(t *testing.T) (*wailsbridge.WailsBridge, *MockDownload
 	bridge := wailsbridge.NewWailsBridge(configService, taskService)
 
 	teardown := func() {
-		os.Remove(fullPath)
+		_ = os.Remove(fullPath)
 	}
 
 	return bridge, mockEngine, mockConfigRepo, teardown

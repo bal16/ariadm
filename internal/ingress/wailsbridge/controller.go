@@ -129,7 +129,7 @@ func (b *WailsBridge) waitForDaemon(target string, timeout time.Duration) error 
 		// Attempt a low-overhead raw TCP connection probe
 		conn, err := net.DialTimeout("tcp", target, 200*time.Millisecond)
 		if err == nil {
-			conn.Close()
+			_ = conn.Close()
 			return nil // Daemon port is active and listening!
 		}
 
