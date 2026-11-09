@@ -19,7 +19,7 @@ import { AddTaskDialog } from "~/components/AddTaskDialog";
 import { DownloadList } from "~/components/DownloadList";
 import { DeleteConfirmDialog } from "~/components/DeleteConfirmDialog";
 import { QuitConfirmDialog } from "~/components/QuitConfirmDialog";
-import { Events, Window } from "@wailsio/runtime";
+import { Events } from "@wailsio/runtime";
 import { Button } from "~/components/ui/button";
 import type { Task } from "~/../bindings/ariadm/internal/domain/task/models";
 import {
@@ -152,7 +152,7 @@ export default function App() {
 
   const handleBackground = () => {
     setShowQuitDialog(false);
-    void Window.Hide();
+    void Events.Emit("app:background");
   };
 
   return (
