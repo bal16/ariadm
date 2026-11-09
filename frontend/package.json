@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build:dev": "vite build --minify false --mode development",
+    "build": "tsc -b && vite build --mode production",
     "preview": "vite preview"
   },
   "dependencies": {
     "@kobalte/core": "^0.13.11",
+    "@wailsio/runtime": "3.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-solid": "^1.21.0",
