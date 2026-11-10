@@ -14,9 +14,9 @@ type App struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
+func NewApp(sessionPath string) *App {
 	return &App{
-		daemon: daemon.NewDaemonManager("aria2c", "6800"),
+		daemon: daemon.NewDaemonManager("aria2c", "6800", sessionPath),
 	}
 }
 

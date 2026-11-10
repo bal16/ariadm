@@ -14,8 +14,9 @@ func setPlatformAttributes(cmd *exec.Cmd) {
 	}
 }
 
-// stopProcess terminates the process. Windows does not support SIGTERM, so the
-// daemon is killed directly, matching the previous behaviour.
+// stopProcess is a no-op on Windows: TerminateProcess gives aria2c no chance to
+// flush its session. Stop asks aria2 to shut down over RPC first and falls back
+// to Kill after the shutdown timeout.
 func stopProcess(process *os.Process) {
-	_ = process.Kill()
+	_ = process
 }

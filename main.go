@@ -4,6 +4,7 @@ import (
 	"embed"
 	"log"
 	"os"
+	"path/filepath"
 
 	"ariadm/internal/domain/config"
 	"ariadm/internal/domain/task"
@@ -45,6 +46,12 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
+	appDir, err := database.ResolveAppDir(appName)
+	if err != nil {
+		log.Fatalf("Failed to resolve application data directory: %v", err)
+	}
+	sessionPath := filepath.Join(appDir, "session.txt")
+
 	rpcClient := rpc.NewAria2Client("http://127.0.0.1:" + rpcPort + "/jsonrpc")
 
 	// Domain services.
@@ -74,7 +81,7 @@ func main() {
 			Handler: application.AssetFileServerFS(assets),
 		},
 		services: []application.Service{
-			application.NewService(NewApp()),
+			application.NewService(NewApp(sessionPath)),
 			application.NewService(bridge),
 		},
 	})
