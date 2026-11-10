@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="AriaDM">
+  <title>AriaDM</title>
+  <rect x="38" y="12" width="24" height="42" rx="2" fill="currentColor" />
+  <polygon points="18,54 50,82 82,54" fill="currentColor" />
+  <rect x="14" y="78" width="10" height="18" rx="2" fill="currentColor" />
+  <rect x="14" y="86" width="72" height="10" rx="3" fill="currentColor" />
+  <rect x="76" y="78" width="10" height="18" rx="2" fill="currentColor" />
+</svg>

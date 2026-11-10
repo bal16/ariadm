@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="AriaDM">
+  <title>AriaDM</title>
+  <!-- Container -->
+  <rect x="4" y="4" width="92" height="92" rx="18" fill="#111827" />
+  <!-- Bold download arrow (teal) -->
+  <rect x="40" y="18" width="20" height="36" rx="2" fill="#0d9488" />
+  <polygon points="26,52 50,74 74,52" fill="#0d9488" />
+  <!-- Tray (light) -->
+  <rect x="22" y="78" width="8" height="12" rx="2" fill="#e5e7eb" />
+  <rect x="22" y="84" width="56" height="8" rx="3" fill="#e5e7eb" />
+  <rect x="70" y="78" width="8" height="12" rx="2" fill="#e5e7eb" />
+</svg>
