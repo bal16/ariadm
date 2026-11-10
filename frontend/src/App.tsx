@@ -18,7 +18,7 @@ export default function App() {
   const [showAddTask, setShowAddTask] = createSignal(false);
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
 
-  const { tasks, engineStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
+  const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
     useTaskQueue();
   const deletion = useTaskDeletion(deleteTask);
 
@@ -51,7 +51,7 @@ export default function App() {
         <DownloadList tasks={tasks} onTogglePause={togglePause} onDelete={deletion.request} />
       </div>
 
-      <StatusBar engineStatus={engineStatus()} downloadSpeed={totalSpeed()} />
+      <StatusBar runtimeStatus={runtimeStatus()} downloadSpeed={totalSpeed()} />
 
       <Show when={showPrefs()}>
         <Preferences onClose={() => setShowPrefs(false)} />
