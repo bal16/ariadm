@@ -20,8 +20,10 @@
   "devDependencies": {
     "@types/node": "^24.13.2",
     "@types/webextension-polyfill": "^0.12.5",
+    "crx": "^5.0.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
-    "vite-plugin-solid": "^2.11.12"
+    "vite-plugin-solid": "^2.11.12",
+    "web-ext": "^10.8.0"
   }
 }

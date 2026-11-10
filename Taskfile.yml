@@ -27,6 +27,39 @@ tasks:
     cmds:
       - task: "{{.GOOS}}:package"
 
+  build:web-extension:
+    summary: Builds the web extension and packages it as zip and xpi
+    cmds:
+      - bun run --cwd web-extension build
+      - mkdir -p bin
+      - sh -c 'cd web-extension/dist && zip -r ../../bin/ariadm-web-extension.zip .'
+      - cp bin/ariadm-web-extension.zip bin/ariadm-web-extension.xpi
+      - echo "Web extension packages written to bin/ariadm-web-extension.zip and bin/ariadm-web-extension.xpi"
+
+  web-extension:keygen:
+    summary: Generates a CRX private key at web-extension/key.pem
+    cmds:
+      - bunx crx keygen web-extension
+      - echo "Private key written to web-extension/key.pem (keep it secret)"
+
+  build:web-extension:crx:
+    summary: Builds a signed CRX using CRX_KEY env var (path to private key)
+    cmds:
+      - bun run --cwd web-extension build
+      - mkdir -p bin
+      - sh -c 'if [ -z "$CRX_KEY" ]; then echo "CRX_KEY env var is required (path to private key)"; exit 1; fi'
+      - bunx crx pack web-extension/dist -p "$CRX_KEY" -o bin/ariadm-web-extension.crx
+      - echo "CRX written to bin/ariadm-web-extension.crx"
+
+  build:web-extension:xpi:signed:
+    summary: Signs the Firefox XPI using WEB_EXT_API_KEY and WEB_EXT_API_SECRET env vars
+    cmds:
+      - bun run --cwd web-extension build
+      - mkdir -p bin
+      - sh -c 'if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then echo "WEB_EXT_API_KEY and WEB_EXT_API_SECRET env vars are required"; exit 1; fi'
+      - sh -c 'cd web-extension && bunx web-ext sign --source-dir dist --artifacts-dir ../../bin --api-key "$WEB_EXT_API_KEY" --api-secret "$WEB_EXT_API_SECRET"'
+      - echo "Signed XPI written to bin/"
+
   build:release:
     summary: Builds release artifacts (binary, platform packages/AppImage, and source snapshot zip)
     cmds:
