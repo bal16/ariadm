@@ -27,6 +27,16 @@ tasks:
     cmds:
       - task: "{{.GOOS}}:package"
 
+  build:release:
+    summary: Builds release artifacts (binary, platform packages/AppImage, and source snapshot zip)
+    cmds:
+      - task: package
+      - cmd: |
+          set -euo pipefail
+          mkdir -p "{{.BIN_DIR}}"
+          git archive --format=zip --output "{{.BIN_DIR}}/{{.APP_NAME}}-source.zip" HEAD
+          echo "Source snapshot written to {{.BIN_DIR}}/{{.APP_NAME}}-source.zip"
+
   run:
     summary: Runs the application
     cmds:
