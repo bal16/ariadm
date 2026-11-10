@@ -1,8 +1,8 @@
 package main
 
 import (
-	"ariadm/internal/infra/daemon"
 	"context"
+	"github.com/bal16/ariadm/internal/infra/daemon"
 	"log"
 
 	"github.com/wailsapp/wails/v3/pkg/application"

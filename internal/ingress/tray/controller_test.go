@@ -3,7 +3,7 @@ package tray_test
 import (
 	"testing"
 
-	"ariadm/internal/ingress/tray"
+	"github.com/bal16/ariadm/internal/ingress/tray"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

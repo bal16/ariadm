@@ -1,8 +1,8 @@
 package httpserver
 
 import (
-	"ariadm/internal/domain/task"
 	"encoding/json"
+	"github.com/bal16/ariadm/internal/domain/task"
 	"net"
 	"net/http"
 )

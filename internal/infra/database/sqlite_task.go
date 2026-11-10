@@ -1,8 +1,8 @@
 package database
 
 import (
-	"ariadm/internal/domain/task"
 	"database/sql"
+	"github.com/bal16/ariadm/internal/domain/task"
 	"os"
 	"path/filepath"
 	"time"

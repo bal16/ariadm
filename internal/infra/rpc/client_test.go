@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"ariadm/internal/infra/rpc"
+	"github.com/bal16/ariadm/internal/infra/rpc"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

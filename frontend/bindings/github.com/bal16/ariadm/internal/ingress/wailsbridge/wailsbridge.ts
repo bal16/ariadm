@@ -16,54 +16,54 @@ import * as task$0 from "../../domain/task/models.js";
  * DeleteTask removes a download from aria2c's queue and wipes its record from the local database
  */
 export function DeleteTask(taskID: string, deleteFiles: boolean): $CancellablePromise<void> {
-    return $Call.ByID(3497722708, taskID, deleteFiles);
+    return $Call.ByID(1970847834, taskID, deleteFiles);
 }
 
 /**
  * GetApplicationConfig fetches the current local settings values
  */
 export function GetApplicationConfig(): $CancellablePromise<config$0.AppConfig | null> {
-    return $Call.ByID(207986114);
+    return $Call.ByID(3237254812);
 }
 
 /**
  * GetTasks queries, enriches with live aria2c data, and returns all task records
  */
 export function GetTasks(): $CancellablePromise<(task$0.Task | null)[] | null> {
-    return $Call.ByID(2473925344);
+    return $Call.ByID(739627038);
 }
 
 /**
  * PauseAllTasks halts every active and waiting download in the queue
  */
 export function PauseAllTasks(): $CancellablePromise<void> {
-    return $Call.ByID(2985455647);
+    return $Call.ByID(4108304625);
 }
 
 /**
  * ResumeAllTasks resumes every paused download in the queue
  */
 export function ResumeAllTasks(): $CancellablePromise<void> {
-    return $Call.ByID(2510230190);
+    return $Call.ByID(2670030920);
 }
 
 /**
  * SaveApplicationConfig saves configuration updates and syncs them live to aria2c
  */
 export function SaveApplicationConfig(cfg: config$0.AppConfig | null): $CancellablePromise<void> {
-    return $Call.ByID(3909966437, cfg);
+    return $Call.ByID(1129614047, cfg);
 }
 
 /**
  * ToggleTaskPauseState flips the network engine status for a single task queue item
  */
 export function ToggleTaskPauseState(taskID: string): $CancellablePromise<void> {
-    return $Call.ByID(1194289640, taskID);
+    return $Call.ByID(240701098, taskID);
 }
 
 /**
  * TriggerNewDownload passes a web URL down into the download manager pipelines
  */
 export function TriggerNewDownload(url: string): $CancellablePromise<task$0.Task | null> {
-    return $Call.ByID(3517177396, url);
+    return $Call.ByID(1244149018, url);
 }

@@ -1,14 +1,14 @@
 import { createSignal, onCleanup, onMount, type Accessor } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { Events } from "@wailsio/runtime";
-import type { Task } from "~/../bindings/ariadm/internal/domain/task/models";
+import type { Task } from "~/../bindings/github.com/bal16/ariadm/internal/domain/task/models";
 import {
   DeleteTask,
   GetTasks,
   PauseAllTasks,
   ResumeAllTasks,
   ToggleTaskPauseState,
-} from "~/../bindings/ariadm/internal/ingress/wailsbridge/wailsbridge";
+} from "~/../bindings/github.com/bal16/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
 export type EngineStatus = "Connecting" | "Running" | "Disconnected";
 

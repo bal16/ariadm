@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"ariadm/internal/ingress/tray"
+	"github.com/bal16/ariadm/internal/ingress/tray"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"

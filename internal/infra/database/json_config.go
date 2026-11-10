@@ -1,8 +1,8 @@
 package database
 
 import (
-	"ariadm/internal/domain/config"
 	"encoding/json"
+	"github.com/bal16/ariadm/internal/domain/config"
 	"os"
 	"path/filepath"
 )

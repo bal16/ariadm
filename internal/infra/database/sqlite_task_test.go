@@ -1,8 +1,8 @@
 package database_test
 
 import (
-	"ariadm/internal/domain/task"
-	"ariadm/internal/infra/database"
+	"github.com/bal16/ariadm/internal/domain/task"
+	"github.com/bal16/ariadm/internal/infra/database"
 	"os"
 	"path/filepath"
 	"testing"

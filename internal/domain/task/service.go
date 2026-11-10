@@ -1,8 +1,8 @@
 package task
 
 import (
-	"ariadm/internal/domain/config"
 	"errors"
+	"github.com/bal16/ariadm/internal/domain/config"
 	"log"
 	"os"
 	"regexp"

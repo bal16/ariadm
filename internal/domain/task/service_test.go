@@ -1,9 +1,9 @@
 package task_test
 
 import (
-	"ariadm/internal/domain/config"
-	"ariadm/internal/domain/task"
 	"errors"
+	"github.com/bal16/ariadm/internal/domain/config"
+	"github.com/bal16/ariadm/internal/domain/task"
 	"testing"
 	"time"
 

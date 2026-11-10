@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"ariadm/internal/domain/task"
+	"github.com/bal16/ariadm/internal/domain/task"
 )
 
 type Aria2Client struct {

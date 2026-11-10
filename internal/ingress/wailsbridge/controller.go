@@ -1,9 +1,9 @@
 package wailsbridge
 
 import (
-	"ariadm/internal/domain/config"
-	"ariadm/internal/domain/task"
 	"context"
+	"github.com/bal16/ariadm/internal/domain/config"
+	"github.com/bal16/ariadm/internal/domain/task"
 	"log"
 	"time"
 

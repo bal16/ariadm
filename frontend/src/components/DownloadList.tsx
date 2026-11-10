@@ -1,6 +1,6 @@
 import { For } from "solid-js";
 import { Play, Pause, Trash2, File, CircleCheck, Download, CircleAlert } from "lucide-solid";
-import type { Task } from "~/../bindings/ariadm/internal/domain/task/models";
+import type { Task } from "~/../bindings/github.com/bal16/ariadm/internal/domain/task/models";
 import { formatBytes } from "~/lib/format";
 
 interface DownloadListProps {

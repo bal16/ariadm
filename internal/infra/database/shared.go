@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-// IsDev can be set via ldflags, e.g., -ldflags "-X ariadm/internal/infra/database.IsDev=true"
+// IsDev can be set via ldflags, e.g., -ldflags "-X github.com/bal16/ariadm/internal/infra/database.IsDev=true"
 // Or we can fall back to checking an environment variable.
 var IsDev = os.Getenv("APP_ENV") == "development"
 

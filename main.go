@@ -6,12 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"ariadm/internal/domain/config"
-	"ariadm/internal/domain/task"
-	"ariadm/internal/infra/database"
-	"ariadm/internal/infra/rpc"
-	"ariadm/internal/ingress/httpserver"
-	"ariadm/internal/ingress/wailsbridge"
+	"github.com/bal16/ariadm/internal/domain/config"
+	"github.com/bal16/ariadm/internal/domain/task"
+	"github.com/bal16/ariadm/internal/infra/database"
+	"github.com/bal16/ariadm/internal/infra/rpc"
+	"github.com/bal16/ariadm/internal/ingress/httpserver"
+	"github.com/bal16/ariadm/internal/ingress/wailsbridge"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )

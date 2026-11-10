@@ -1,8 +1,8 @@
 package config_test
 
 import (
-	"ariadm/internal/domain/config"
 	"errors"
+	"github.com/bal16/ariadm/internal/domain/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

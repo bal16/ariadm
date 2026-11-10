@@ -1,4 +1,4 @@
-module ariadm
+module github.com/bal16/ariadm
 
 go 1.26.0
 

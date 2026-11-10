@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"ariadm/internal/domain/config"
-	"ariadm/internal/domain/task"
-	"ariadm/internal/infra/database"
-	"ariadm/internal/ingress/wailsbridge"
+	"github.com/bal16/ariadm/internal/domain/config"
+	"github.com/bal16/ariadm/internal/domain/task"
+	"github.com/bal16/ariadm/internal/infra/database"
+	"github.com/bal16/ariadm/internal/ingress/wailsbridge"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
