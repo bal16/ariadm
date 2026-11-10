@@ -81,7 +81,7 @@ func main() {
 			Handler: application.AssetFileServerFS(assets),
 		},
 		services: []application.Service{
-			application.NewService(NewApp(sessionPath)),
+			application.NewService(NewApp(sessionPath, filepath.Join(appDir, "daemon.pid"))),
 			application.NewService(bridge),
 		},
 	})

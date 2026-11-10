@@ -14,16 +14,16 @@ type App struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp(sessionPath string) *App {
+func NewApp(sessionPath string, pidPath string) *App {
 	return &App{
-		daemon: daemon.NewDaemonManager("aria2c", "6800", sessionPath),
+		daemon: daemon.NewDaemonManager("aria2c", []int{6800}, sessionPath, pidPath),
 	}
 }
 
 // ServiceStartup is called by Wails when the application starts.
 func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
 	log.Println("Initializing aria2c daemon engine...")
-	if err := a.daemon.Start(); err != nil {
+	if _, err := a.daemon.Start(); err != nil {
 		log.Printf("CRITICAL: Failed to launch download engine: %v\n", err)
 	}
 
