@@ -40,7 +40,7 @@ export function Preferences(props: { onClose: () => void }) {
 
   return (
     <div class="absolute top-16 left-1/2 -translate-x-1/2 z-50 p-1 animate-in fade-in zoom-in-95 duration-150">
-      <div class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-[560px] h-[360px] flex flex-col overflow-hidden">
+      <div class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-140 h-90 flex flex-col overflow-hidden">
         {/* Window Title Bar */}
         <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-border bg-muted/60 select-none">
           <div class="flex items-center space-x-1.5 text-xs font-medium text-foreground">

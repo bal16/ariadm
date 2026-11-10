@@ -6,8 +6,8 @@ export function QuitConfirmDialog(props: {
   onBackground: () => void;
 }) {
   return (
-    <div class="absolute top-20 left-1/2 -translate-x-1/2 z-[60] p-1 animate-in fade-in zoom-in-95 duration-150">
-      <div class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-[420px] flex flex-col overflow-hidden">
+    <div class="absolute top-20 left-1/2 -translate-x-1/2 z-60 p-1 animate-in fade-in zoom-in-95 duration-150">
+      <div class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-105 flex flex-col overflow-hidden">
         {/* Title Bar */}
         <div class="flex items-center px-2.5 py-1.5 border-b border-border bg-muted/60 select-none">
           <div class="flex items-center space-x-1.5 text-xs font-medium text-foreground">
