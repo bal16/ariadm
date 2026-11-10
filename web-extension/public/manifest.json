@@ -4,23 +4,19 @@
   "description": "Ariadm Integration Extension. Aria2c GUI built with SolidJS and TailwindCSS.",
   "manifest_version": 3,
   "icons": {
-    "16": "/android-chrome-192x192.png",
-    "32": "/android-chrome-192x192.png",
-    "48": "/android-chrome-192x192.png",
-    "128": "/android-chrome-192x192.png",
-    "192": "/android-chrome-192x192.png",
-    "512": "/android-chrome-512x512.png"
+    "16": "/favicon-16x16.png",
+    "32": "/favicon-32x32.png",
+    "48": "/favicon-48x48.png",
+    "128": "/favicon-128x128.png"
   },
   "permissions": ["downloads", "storage"],
   "host_permissions": ["http://localhost:9999/download"],
   "action": {
     "default_icon": {
-      "16": "/android-chrome-192x192.png",
-      "32": "/android-chrome-192x192.png",
-      "48": "/android-chrome-192x192.png",
-      "128": "/android-chrome-192x192.png",
-      "192": "/android-chrome-192x192.png",
-      "512": "/android-chrome-512x512.png"
+      "16": "/favicon-16x16.png",
+      "32": "/favicon-32x32.png",
+      "48": "/favicon-48x48.png",
+      "128": "/favicon-128x128.png"
     },
     "default_popup": "popup.html"
   },
