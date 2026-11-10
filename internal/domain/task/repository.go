@@ -23,7 +23,8 @@ type Aria2Status struct {
 
 // DownloadEngine handles task manipulation commands sent to aria2c
 type DownloadEngine interface {
-	AddURI(url string, downloadPath string, fileName string) (string, error) // Returns GID
+	AddURI(url string, downloadPath string, fileName string) (string, error)    // Returns GID
+	ResumeURI(url string, downloadPath string, fileName string) (string, error) // Reattach to an existing partial download
 	Pause(gid string) error
 	Unpause(gid string) error
 	PauseAll() error                             // Pause every active and waiting download

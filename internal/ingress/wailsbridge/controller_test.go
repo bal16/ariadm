@@ -21,6 +21,10 @@ func (m *MockDownloadEngine) AddURI(url, path, fileName string) (string, error) 
 	args := m.Called(url, path)
 	return args.String(0), args.Error(1)
 }
+func (m *MockDownloadEngine) ResumeURI(url, path, fileName string) (string, error) {
+	args := m.Called(url, path)
+	return args.String(0), args.Error(1)
+}
 func (m *MockDownloadEngine) Pause(gid string) error   { return m.Called(gid).Error(0) }
 func (m *MockDownloadEngine) Unpause(gid string) error { return m.Called(gid).Error(0) }
 func (m *MockDownloadEngine) PauseAll() error          { return m.Called().Error(0) }

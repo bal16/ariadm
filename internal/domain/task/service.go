@@ -60,6 +60,37 @@ func (s *TaskService) DownloadFile(url string) (*Task, error) {
 	return newTask, nil
 }
 
+// isGIDNotFound reports whether aria2 rejected a request because it no longer
+// knows the GID, which happens when the daemon restarts between sessions.
+func isGIDNotFound(err error) bool {
+	return strings.Contains(strings.ToLower(err.Error()), "is not found")
+}
+
+// isAlreadyUnpaused reports whether aria2 refused to unpause a download
+// because it is not currently paused (for example, reconciliation already
+// restarted it as active).
+func isAlreadyUnpaused(err error) bool {
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "cannot be unpaused") || strings.Contains(msg, "is not paused")
+}
+
+// captureLiveMetadata copies the filename and byte counters from aria2 into the
+// local task. It is called before the daemon may be stopped so a later session
+// can resume the same file instead of downloading it again under a new name.
+func (s *TaskService) captureLiveMetadata(t *Task) {
+	live, err := s.engine.TellStatus(t.GID)
+	if err != nil {
+		return
+	}
+
+	t.TotalLength = live.TotalLength
+	t.CompletedLength = live.CompletedLength
+	t.Speed = live.DownloadSpeed
+	if live.FileName != "" {
+		t.FileName = live.FileName
+	}
+}
+
 func (s *TaskService) TogglePauseTask(id string) error {
 	// 1. Fetch the target task from the tracking database
 	t, err := s.taskRepo.GetByID(id)
@@ -79,21 +110,29 @@ func (s *TaskService) TogglePauseTask(id string) error {
 		// Instruct aria2c engine to halt network operations
 		if err := s.engine.Pause(t.GID); err != nil {
 			// If the daemon was reset and the GID is already gone, just force local synchronization
-			if strings.Contains(err.Error(), "is not found") {
+			if isGIDNotFound(err) {
 				t.Status = StatusPaused
+				t.Speed = 0
 				break
 			}
 			return err
 		}
+
+		// Persist the resolved filename and byte counters while aria2 still
+		// knows about the download. Without this, a pause performed before the
+		// first telemetry tick leaves FileName empty and the next session
+		// cannot resume the existing partial file.
+		s.captureLiveMetadata(t)
 		t.Status = StatusPaused
+		t.Speed = 0
 
 	case StatusPaused:
 		// Instruct aria2c engine to fire up network segments again
 		if err := s.engine.Unpause(t.GID); err != nil {
 			// 🎯 ON-THE-FLY HEALING: Handle daemon session wipe or dropped GID environments
-			if strings.Contains(err.Error(), "is not found") {
+			if isGIDNotFound(err) {
 				// Re-inject link with the verified filename to attach to the existing .aria2 chunk file
-				newGID, rpcErr := s.engine.AddURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
+				newGID, rpcErr := s.engine.ResumeURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
 				if rpcErr != nil {
 					return rpcErr
 				}
@@ -103,6 +142,20 @@ func (s *TaskService) TogglePauseTask(id string) error {
 				t.Status = StatusActive
 				break
 			}
+
+			// Older reconciliation versions could restart a paused task as
+			// active in aria2 while leaving the database row paused. In that
+			// case unpause is rejected, but the download is already running;
+			// treat it as a successful resume instead of surfacing an error.
+			if isAlreadyUnpaused(err) {
+				live, statusErr := s.engine.TellStatus(t.GID)
+				if statusErr == nil && (live.Status == string(StatusActive) || live.Status == string(StatusWaiting)) {
+					t.Status = StatusActive
+					t.Speed = live.DownloadSpeed
+					break
+				}
+			}
+
 			return err
 		}
 		t.Status = StatusActive
@@ -134,6 +187,10 @@ func (s *TaskService) PauseAllTasks() error {
 			continue
 		}
 
+		// Capture the resolved filename and counters while aria2 still knows
+		// the download, so a later session can resume the same partial file.
+		s.captureLiveMetadata(t)
+
 		t.Status = StatusPaused
 		t.Speed = 0
 		if err := s.taskRepo.Update(t); err != nil {
@@ -160,6 +217,26 @@ func (s *TaskService) ResumeAllTasks() error {
 	for _, t := range tasks {
 		if t.Status != StatusPaused {
 			continue
+		}
+
+		// A paused task can outlive aria2's knowledge of its GID (daemon
+		// restart, failed reconciliation). Re-inject it so "Resume All" never
+		// leaves a task marked active with nothing running in the engine.
+		if _, statusErr := s.engine.TellStatus(t.GID); statusErr != nil && isGIDNotFound(statusErr) {
+			cfg, cfgErr := s.configRepo.Load()
+			if cfgErr != nil {
+				return cfgErr
+			}
+
+			newGID, addErr := s.engine.ResumeURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
+			if addErr != nil {
+				t.Status = StatusError
+				if err := s.taskRepo.Update(t); err != nil {
+					return err
+				}
+				continue
+			}
+			t.GID = newGID
 		}
 
 		t.Status = StatusActive
@@ -295,7 +372,7 @@ func (s *TaskService) ReconcileSessionTasks() error {
 				// GID is dead or missing from the current aria2c process session context
 				// Re-inject the resource URL. Aria2c automatically picks up existing files natively.
 				log.Printf("%v", t)
-				newGID, rpcErr := s.engine.AddURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
+				newGID, rpcErr := s.engine.ResumeURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
 				if rpcErr != nil {
 					// If the engine fails completely, flag the task tracking row locally as an error
 					log.Printf("error happen %v", rpcErr)
@@ -306,6 +383,17 @@ func (s *TaskService) ReconcileSessionTasks() error {
 
 				// Map the freshly generated runtime identifier back to the system entity record
 				t.GID = newGID
+
+				// A paused task must stay paused after re-injection. Otherwise
+				// aria2 starts transferring behind the UI, and a later resume
+				// is rejected because the download is already active.
+				if t.Status == StatusPaused {
+					if pauseErr := s.engine.Pause(newGID); pauseErr != nil {
+						log.Printf("failed to restore paused state for task %s: %v", t.ID, pauseErr)
+						t.Status = StatusActive
+					}
+				}
+
 				err = s.taskRepo.Update(t)
 				if err != nil {
 					return err
