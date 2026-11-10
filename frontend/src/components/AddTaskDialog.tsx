@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, onMount, Show } from "solid-js";
 import { Link, X, Download, TriangleAlert } from "lucide-solid";
 import { TriggerNewDownload } from "~/../bindings/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
@@ -6,6 +6,11 @@ export function AddTaskDialog(props: { onClose: () => void }) {
   const [url, setUrl] = createSignal("");
   const [isSubmitting, setIsSubmitting] = createSignal(false);
   const [errorMsg, setErrorMsg] = createSignal("");
+  let urlInput: HTMLInputElement | undefined;
+
+  onMount(() => {
+    urlInput?.focus();
+  });
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -60,8 +65,10 @@ export function AddTaskDialog(props: { onClose: () => void }) {
               Source Resource URL (HTTP / HTTPS)
             </label>
             <input
+              ref={(el) => {
+                urlInput = el;
+              }}
               type="text"
-              autofocus
               placeholder="Paste download path link address here..."
               class="w-full px-3 py-1.5 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
               value={url()}
