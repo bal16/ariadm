@@ -2,20 +2,25 @@ package httpserver
 
 import (
 	"encoding/json"
-	"github.com/bal16/ariadm/internal/domain/task"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"strconv"
+
+	"github.com/bal16/ariadm/internal/domain/task"
 )
 
 type HTTPServer struct {
 	server      *http.Server
 	taskService *task.TaskService
-	port        string
+	ports       []int
+	port        int
 }
 
-func NewHTTPServer(port string, ts *task.TaskService) *HTTPServer {
+func NewHTTPServer(ports []int, ts *task.TaskService) *HTTPServer {
 	return &HTTPServer{
-		port:        port,
+		ports:       ports,
 		taskService: ts,
 	}
 }
@@ -73,6 +78,22 @@ func (s *HTTPServer) HandleDownload(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// HandleHealth lets the browser extension verify that it found ariadm and not
+// some unrelated service that happens to occupy a candidate port.
+func (s *HTTPServer) HandleHealth(w http.ResponseWriter, r *http.Request) {
+	s.enableCors(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	s.writeJSON(w, http.StatusOK, map[string]string{
+		"status": "ok",
+		"app":    "ariadm",
+	})
+}
+
 func (s *HTTPServer) enableCors(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -86,26 +107,38 @@ func (s *HTTPServer) writeJSON(w http.ResponseWriter, statusCode int, payload in
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
-// Start binds to the local address and launches the HTTP service listener
-func (s *HTTPServer) Start() error {
+// Start binds the first free port in the configured range and serves it in the
+// background. Binding is attempted synchronously so callers can report a real
+// failure instead of claiming to be listening.
+func (s *HTTPServer) Start() (int, error) {
 	mux := http.NewServeMux()
-
 	mux.HandleFunc("/download", s.HandleDownload)
+	mux.HandleFunc("/health", s.HandleHealth)
 
-	s.server = &http.Server{
-		Addr:    net.JoinHostPort("127.0.0.1", s.port),
-		Handler: mux,
+	for _, port := range s.ports {
+		listener, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(port)))
+		if err != nil {
+			continue
+		}
+
+		s.port = port
+		s.server = &http.Server{Handler: mux}
+
+		go func() {
+			if err := s.server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				println("Local HTTP Server crash details:", err.Error())
+			}
+		}()
+
+		return port, nil
 	}
 
-	// Run the listener inside a goroutine so it doesn't block the Wails UI runtime thread
-	go func() {
-		if err := s.server.ListenAndServe(); err != http.ErrServerClosed {
-			// In production, wire this to a proper logger system
-			println("Local HTTP Server crash details:", err.Error())
-		}
-	}()
+	return 0, fmt.Errorf("no usable HTTP port in range %v", s.ports)
+}
 
-	return nil
+// Port returns the port that Start bound, or zero before a successful start.
+func (s *HTTPServer) Port() int {
+	return s.port
 }
 
 // Stop gracefully shuts down the local listener port

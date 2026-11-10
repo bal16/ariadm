@@ -31,7 +31,7 @@ var trayIconTemplate []byte
 const (
 	appName  = "ariadm"
 	rpcPort  = "6800"
-	httpPort = "9999"
+	httpPort = 9999
 )
 
 func main() {
@@ -61,11 +61,11 @@ func main() {
 	// Ingress controllers.
 	bridge := wailsbridge.NewWailsBridge(configService, taskService)
 
-	localHTTPServer := httpserver.NewHTTPServer(httpPort, taskService)
-	if err := localHTTPServer.Start(); err != nil {
+	localHTTPServer := httpserver.NewHTTPServer([]int{httpPort}, taskService)
+	if _, err := localHTTPServer.Start(); err != nil {
 		log.Printf("Warning: Extension listener failed to bind: %v", err)
 	} else {
-		log.Printf("Local HTTP Server is listening on http://127.0.0.1:%s", httpPort)
+		log.Printf("Local HTTP Server is listening on http://127.0.0.1:%d", localHTTPServer.Port())
 	}
 	defer func() { _ = localHTTPServer.Stop() }()
 
