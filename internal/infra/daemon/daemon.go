@@ -3,7 +3,10 @@ package daemon
 import (
 	"errors"
 	"os/exec"
+	"time"
 )
+
+const shutdownTimeout = 5 * time.Second
 
 type DaemonManager struct {
 	cmd        *exec.Cmd
@@ -45,19 +48,30 @@ func (dm *DaemonManager) Start() error {
 	return nil
 }
 
-// Stop safely terminates the backend aria2c process
+// Stop asks aria2c to terminate so it can flush its partially downloaded files
+// and control files before exiting. Falls back to a hard kill if the daemon
+// does not stop within the timeout.
 func (dm *DaemonManager) Stop() error {
 	if dm.cmd == nil || dm.cmd.Process == nil {
 		return nil // Nothing to stop
 	}
 
-	// Kill the process immediately
-	if err := dm.cmd.Process.Kill(); err != nil {
-		return err
+	cmd := dm.cmd
+	dm.cmd = nil
+
+	stopProcess(cmd.Process)
+
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Wait()
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(shutdownTimeout):
+		_ = cmd.Process.Kill()
+		<-done
 	}
 
-	// Wait for the process to release resources
-	_, _ = dm.cmd.Process.Wait()
-	dm.cmd = nil
 	return nil
 }
