@@ -7,6 +7,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as appstate$0 from "../../appstate/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as config$0 from "../../domain/config/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -24,6 +27,15 @@ export function DeleteTask(taskID: string, deleteFiles: boolean): $CancellablePr
  */
 export function GetApplicationConfig(): $CancellablePromise<config$0.AppConfig | null> {
     return $Call.ByID(3237254812);
+}
+
+/**
+ * GetRuntimeStatus returns the current engine and extension state. The frontend
+ * reads it on mount because background mode recreates the webview and events
+ * published before that point are lost.
+ */
+export function GetRuntimeStatus(): $CancellablePromise<appstate$0.Status> {
+    return $Call.ByID(2326573250);
 }
 
 /**

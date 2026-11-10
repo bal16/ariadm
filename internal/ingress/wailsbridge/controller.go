@@ -2,10 +2,12 @@ package wailsbridge
 
 import (
 	"context"
-	"github.com/bal16/ariadm/internal/domain/config"
-	"github.com/bal16/ariadm/internal/domain/task"
 	"log"
 	"time"
+
+	"github.com/bal16/ariadm/internal/appstate"
+	"github.com/bal16/ariadm/internal/domain/config"
+	"github.com/bal16/ariadm/internal/domain/task"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -15,13 +17,22 @@ type WailsBridge struct {
 	cancel        context.CancelFunc
 	configService *config.ConfigService
 	taskService   *task.TaskService
+	hub           *appstate.Hub
 }
 
-func NewWailsBridge(cs *config.ConfigService, ts *task.TaskService) *WailsBridge {
+func NewWailsBridge(cs *config.ConfigService, ts *task.TaskService, hub *appstate.Hub) *WailsBridge {
 	return &WailsBridge{
 		configService: cs,
 		taskService:   ts,
+		hub:           hub,
 	}
+}
+
+// GetRuntimeStatus returns the current engine and extension state. The frontend
+// reads it on mount because background mode recreates the webview and events
+// published before that point are lost.
+func (b *WailsBridge) GetRuntimeStatus() appstate.Status {
+	return b.hub.Snapshot()
 }
 
 // GetApplicationConfig fetches the current local settings values
@@ -70,7 +81,7 @@ func (b *WailsBridge) ServiceStartup(ctx context.Context, options application.Se
 	go func() {
 		if err := b.taskService.WaitForEngine(5 * time.Second); err != nil {
 			log.Printf("Error: Aria2c daemon RPC socket failed to initialize within timeout: %v", err)
-			b.emit("engine:status", "disconnected")
+			b.hub.SetEngineHealth(appstate.EngineDisconnected)
 			return
 		}
 		if err := b.taskService.ReconcileSessionTasks(); err != nil {
@@ -103,13 +114,13 @@ func (b *WailsBridge) startTelemetryLoop() {
 			// Fetch fresh tasks and sync live aria2c progress data into SQLite
 			tasks, err := b.taskService.SyncAndGetAllTasks()
 			if err != nil {
-				b.emit("engine:status", "disconnected")
+				b.hub.SetEngineHealth(appstate.EngineDisconnected)
 				continue
 			}
 
 			// Broadcast live array bursts straight onto the SolidJS frontend
 			b.emit("tasks:update", tasks)
-			b.emit("engine:status", "running")
+			b.hub.SetEngineHealth(appstate.EngineRunning)
 		}
 	}
 }

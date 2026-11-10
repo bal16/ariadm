@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/bal16/ariadm/internal/appstate"
 	"github.com/bal16/ariadm/internal/domain/config"
 	"github.com/bal16/ariadm/internal/domain/task"
 	"github.com/bal16/ariadm/internal/infra/database"
@@ -85,7 +86,7 @@ func setupIntegrationTest(t *testing.T) (*wailsbridge.WailsBridge, *MockDownload
 	configService := config.NewConfigService(mockConfigRepo, mockEngine)
 	taskService := task.NewTaskService(taskRepo, mockEngine, mockConfigRepo)
 
-	bridge := wailsbridge.NewWailsBridge(configService, taskService)
+	bridge := wailsbridge.NewWailsBridge(configService, taskService, appstate.NewHub(nil))
 
 	teardown := func() {
 		_ = os.Remove(fullPath)
@@ -188,4 +189,16 @@ func TestWailsBridge_PauseResumeAll_Integration(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, activeQueue, 1)
 	assert.Equal(t, "active", string(activeQueue[0].Status))
+}
+
+func TestGetRuntimeStatus_ReturnsHubSnapshot(t *testing.T) {
+	hub := appstate.NewHub(nil)
+	hub.SetEngine(appstate.EnginePortConflict, 0, "no usable aria2 RPC port in range")
+
+	bridge := wailsbridge.NewWailsBridge(nil, nil, hub)
+
+	status := bridge.GetRuntimeStatus()
+
+	assert.Equal(t, appstate.EnginePortConflict, status.Engine)
+	assert.Contains(t, status.EngineMessage, "no usable")
 }

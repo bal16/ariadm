@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bal16/ariadm/internal/appstate"
 	"github.com/bal16/ariadm/internal/domain/config"
 	"github.com/bal16/ariadm/internal/domain/task"
 	"github.com/bal16/ariadm/internal/infra/database"
@@ -67,7 +68,7 @@ func setupTrueE2EContext(t *testing.T) (*wailsbridge.WailsBridge, func()) {
 	mockConfigRepo := &ConfigMockForE2E{}
 	configService := config.NewConfigService(mockConfigRepo, realRPCClient)
 	taskService := task.NewTaskService(taskRepo, realRPCClient, mockConfigRepo)
-	bridge := wailsbridge.NewWailsBridge(configService, taskService)
+	bridge := wailsbridge.NewWailsBridge(configService, taskService, appstate.NewHub(nil))
 
 	// 5. Define teardown routine to clean up the environment completely
 	teardown := func() {

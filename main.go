@@ -2,12 +2,15 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/bal16/ariadm/internal/appstate"
 	"github.com/bal16/ariadm/internal/domain/config"
 	"github.com/bal16/ariadm/internal/domain/task"
+	"github.com/bal16/ariadm/internal/infra/daemon"
 	"github.com/bal16/ariadm/internal/infra/database"
 	"github.com/bal16/ariadm/internal/infra/rpc"
 	"github.com/bal16/ariadm/internal/ingress/httpserver"
@@ -29,9 +32,12 @@ var trayIconDark []byte
 var trayIconTemplate []byte
 
 const (
-	appName  = "ariadm"
-	rpcPort  = "6800"
-	httpPort = 9999
+	appName = "ariadm"
+
+	rpcPortStart  = 6800
+	rpcPortCount  = 10
+	httpPortStart = 9999
+	httpPortCount = 10
 )
 
 func main() {
@@ -50,24 +56,36 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to resolve application data directory: %v", err)
 	}
+
+	rpcPorts := portRange(rpcPortStart, rpcPortCount)
+	pidPath := filepath.Join(appDir, "daemon.pid")
 	sessionPath := filepath.Join(appDir, "session.txt")
 
-	rpcClient := rpc.NewAria2Client("http://127.0.0.1:" + rpcPort + "/jsonrpc")
+	hub := appstate.NewHub(func(status appstate.Status) {
+		if app := application.Get(); app != nil {
+			app.Event.Emit("runtime:status", status)
+		}
+	})
+
+	rpcClient := rpc.NewAria2Client(fmt.Sprintf("http://127.0.0.1:%d/jsonrpc", rpcPorts[0]))
 
 	// Domain services.
 	configService := config.NewConfigService(configRepo, rpcClient)
 	taskService := task.NewTaskService(taskRepo, rpcClient, configRepo)
 
 	// Ingress controllers.
-	bridge := wailsbridge.NewWailsBridge(configService, taskService)
-
-	localHTTPServer := httpserver.NewHTTPServer([]int{httpPort}, taskService)
-	if _, err := localHTTPServer.Start(); err != nil {
+	localHTTPServer := httpserver.NewHTTPServer(portRange(httpPortStart, httpPortCount), taskService)
+	if port, err := localHTTPServer.Start(); err != nil {
+		hub.SetExtension(appstate.ExtensionUnavailable, 0, err.Error())
 		log.Printf("Warning: Extension listener failed to bind: %v", err)
 	} else {
-		log.Printf("Local HTTP Server is listening on http://127.0.0.1:%d", localHTTPServer.Port())
+		hub.SetExtension(appstate.ExtensionListening, port, "")
+		log.Printf("Local HTTP Server is listening on http://127.0.0.1:%d", port)
 	}
 	defer func() { _ = localHTTPServer.Stop() }()
+
+	daemonManager := daemon.NewDaemonManager("aria2c", rpcPorts, sessionPath, pidPath)
+	bridge := wailsbridge.NewWailsBridge(configService, taskService, hub)
 
 	// Desktop shell.
 	desktop := newShell(shellOptions{
@@ -81,7 +99,7 @@ func main() {
 			Handler: application.AssetFileServerFS(assets),
 		},
 		services: []application.Service{
-			application.NewService(NewApp(sessionPath, filepath.Join(appDir, "daemon.pid"))),
+			application.NewService(NewApp(daemonManager, rpcClient, hub)),
 			application.NewService(bridge),
 		},
 	})
@@ -90,4 +108,13 @@ func main() {
 		log.Printf("Error: %v", err)
 		os.Exit(1)
 	}
+}
+
+// portRange builds the bounded candidate list for a service port.
+func portRange(start, count int) []int {
+	ports := make([]int, 0, count)
+	for port := start; port < start+count; port++ {
+		ports = append(ports, port)
+	}
+	return ports
 }

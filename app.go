@@ -2,32 +2,51 @@ package main
 
 import (
 	"context"
-	"github.com/bal16/ariadm/internal/infra/daemon"
+	"errors"
 	"log"
+
+	"github.com/bal16/ariadm/internal/appstate"
+	"github.com/bal16/ariadm/internal/infra/daemon"
+	"github.com/bal16/ariadm/internal/infra/rpc"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// App struct
+// App owns the download engine process and publishes its state.
 type App struct {
 	daemon *daemon.DaemonManager
+	client *rpc.Aria2Client
+	hub    *appstate.Hub
 }
 
 // NewApp creates a new App application struct
-func NewApp(sessionPath string, pidPath string) *App {
+func NewApp(dm *daemon.DaemonManager, client *rpc.Aria2Client, hub *appstate.Hub) *App {
 	return &App{
-		daemon: daemon.NewDaemonManager("aria2c", []int{6800}, sessionPath, pidPath),
+		daemon: dm,
+		client: client,
+		hub:    hub,
 	}
 }
 
 // ServiceStartup is called by Wails when the application starts.
 func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
 	log.Println("Initializing aria2c daemon engine...")
-	if _, err := a.daemon.Start(); err != nil {
-		log.Printf("CRITICAL: Failed to launch download engine: %v\n", err)
+
+	port, err := a.daemon.Start()
+	if err != nil {
+		state := appstate.EngineFailed
+		if errors.Is(err, daemon.ErrNoPortAvailable) {
+			state = appstate.EnginePortConflict
+		}
+		a.hub.SetEngine(state, 0, err.Error())
+		log.Printf("CRITICAL: Failed to launch download engine: %v", err)
+		return nil
 	}
 
-	// TODO: Handle if daemon already started or port already used
+	a.client.SetPort(port)
+	a.hub.SetEngine(appstate.EngineRunning, port, "")
+	log.Printf("Download engine is listening on 127.0.0.1:%d", port)
+
 	return nil
 }
 
@@ -35,7 +54,8 @@ func (a *App) ServiceStartup(ctx context.Context, options application.ServiceOpt
 func (a *App) ServiceShutdown() error {
 	log.Println("Stopping download engine safely...")
 	if err := a.daemon.Stop(); err != nil {
-		log.Printf("Error shutting down daemon: %v\n", err)
+		log.Printf("Error shutting down daemon: %v", err)
 	}
+	a.hub.SetEngine(appstate.EngineStopped, 0, "")
 	return nil
 }
