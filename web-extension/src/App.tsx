@@ -1,9 +1,13 @@
 import { createSignal, onMount, onCleanup } from "solid-js";
 import browser from "webextension-polyfill";
-import { PORT } from "./config";
+import { resolvePort } from "./discovery";
+
+const POLL_INTERVAL_MS = 5000;
 
 function App() {
   const [serviceEnabled, setServiceEnabled] = createSignal<boolean>(false);
+  const [port, setPort] = createSignal<number | null>(null);
+  let pollTimer: ReturnType<typeof setInterval> | undefined;
 
   onMount(async () => {
     const data = await browser.storage.local.get({ serviceEnabled: true });
@@ -11,10 +15,20 @@ function App() {
     setServiceEnabled(isEnabled);
 
     browser.storage.onChanged.addListener(handleStorageChange);
+
+    const refresh = async () => {
+      setPort(await resolvePort());
+    };
+
+    await refresh();
+    pollTimer = setInterval(() => void refresh(), POLL_INTERVAL_MS);
   });
 
   onCleanup(() => {
     browser.storage.onChanged.removeListener(handleStorageChange);
+    if (pollTimer !== undefined) {
+      clearInterval(pollTimer);
+    }
   });
 
   const handleStorageChange = (
@@ -31,6 +45,8 @@ function App() {
     await browser.storage.local.set({ serviceEnabled: newStatus });
     setServiceEnabled(newStatus);
   };
+
+  const connected = () => port() !== null;
 
   return (
     <div class="w-64 bg-background text-foreground p-4 font-sans">
@@ -74,7 +90,7 @@ function App() {
       </main>
 
       <footer class="text-center text-xs text-muted-foreground pt-4 border-t border-border">
-        Listening on port {PORT}
+        {connected() ? <>Connected · Listening on port {port()}</> : "Ariadm not running"}
       </footer>
     </div>
   );

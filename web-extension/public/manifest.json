@@ -10,7 +10,7 @@
     "128": "/favicon-128x128.png"
   },
   "permissions": ["downloads", "storage"],
-  "host_permissions": ["http://localhost:9999/download"],
+  "host_permissions": ["http://localhost/*"],
   "action": {
     "default_icon": {
       "16": "/favicon-16x16.png",
