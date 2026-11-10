@@ -6,6 +6,8 @@ generated
 .task
 
 # Wails v3 platform build artifacts
+build/linux/appimage/ariadm
+build/linux/appimage/ariadm.png
 build/linux/appimage/build
 build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 
