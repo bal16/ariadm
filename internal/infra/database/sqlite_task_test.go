@@ -74,4 +74,21 @@ func TestSQLiteTaskRepository_Integration(t *testing.T) {
 	fetchedByGID, err := repo.GetByGID(dummyTask.GID)
 	require.NoError(t, err)
 	assert.Equal(t, dummyTask.ID, fetchedByGID.ID)
+
+	// 7. UPDATE GID
+	// Re-injection and reconciliation assign a fresh daemon GID to an existing
+	// task. Update must persist it, otherwise telemetry keeps polling a GID that
+	// the engine no longer knows and the task stays "active" at 0 B/s.
+	oldGID := dummyTask.GID
+	dummyTask.GID = "aria2_gid_updated_456"
+
+	err = repo.Update(dummyTask)
+	require.NoError(t, err)
+
+	updatedByNewGID, err := repo.GetByGID(dummyTask.GID)
+	require.NoError(t, err)
+	assert.Equal(t, dummyTask.ID, updatedByNewGID.ID)
+
+	_, err = repo.GetByGID(oldGID)
+	assert.Error(t, err, "the stale GID must no longer resolve to the task")
 }

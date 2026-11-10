@@ -103,9 +103,9 @@ func (r *SQLiteTaskRepository) GetByGID(gid string) (*task.Task, error) {
 
 // Update rewrites mutable attributes (progress meters, speeds, download status changes)
 func (r *SQLiteTaskRepository) Update(t *task.Task) error {
-	query := `UPDATE tasks SET file_name = ?, total_length = ?, completed_length = ?, speed = ?, status = ? WHERE id = ?`
+	query := `UPDATE tasks SET gid = ?, file_name = ?, total_length = ?, completed_length = ?, speed = ?, status = ? WHERE id = ?`
 
-	_, err := r.db.Exec(query, t.FileName, t.TotalLength, t.CompletedLength, t.Speed, string(t.Status), t.ID)
+	_, err := r.db.Exec(query, t.GID, t.FileName, t.TotalLength, t.CompletedLength, t.Speed, string(t.Status), t.ID)
 	return err
 }
 
