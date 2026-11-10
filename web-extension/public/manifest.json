@@ -23,5 +23,10 @@
   "background": {
     "service_worker": "src/background.ts",
     "scripts": ["src/background.ts"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ariadm-integration@bal16"
+    }
   }
 }
