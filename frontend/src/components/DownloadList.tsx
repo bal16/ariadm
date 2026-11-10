@@ -1,14 +1,7 @@
 import { For } from "solid-js";
 import { Play, Pause, Trash2, File, CircleCheck, Download, CircleAlert } from "lucide-solid";
 import type { Task } from "~/../bindings/ariadm/internal/domain/task/models";
-
-const formatBytes = (bytes: number) => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
+import { formatBytes } from "~/lib/format";
 
 interface DownloadListProps {
   tasks: Task[];
@@ -35,7 +28,6 @@ export function DownloadList(props: DownloadListProps) {
           </thead>
 
           <tbody class="divide-y divide-border/60 bg-background font-mono text-[11px]">
-            {/* 🟢 PERBAIKAN 2: Hapus <Show>, pasang fallback langsung di dalam <For> */}
             <For
               each={props.tasks}
               fallback={
