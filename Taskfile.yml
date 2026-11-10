@@ -57,7 +57,7 @@ tasks:
       - bun run --cwd web-extension build
       - mkdir -p bin
       - sh -c 'if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then echo "WEB_EXT_API_KEY and WEB_EXT_API_SECRET env vars are required"; exit 1; fi'
-      - sh -c 'cd web-extension && bunx web-ext sign --source-dir dist --artifacts-dir ../../bin --api-key "$WEB_EXT_API_KEY" --api-secret "$WEB_EXT_API_SECRET" --channel "${WEB_EXT_CHANNEL:-unlisted}"'
+      - sh -c 'cd web-extension && bunx web-ext sign --source-dir dist --artifacts-dir "{{.ROOT_DIR}}/bin" --api-key "$WEB_EXT_API_KEY" --api-secret "$WEB_EXT_API_SECRET" --channel "${WEB_EXT_CHANNEL:-unlisted}"'
       - echo "Signed XPI written to bin/"
 
   build:release:
