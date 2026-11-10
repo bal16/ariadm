@@ -2,8 +2,11 @@ package rpc_test
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/bal16/ariadm/internal/infra/rpc"
@@ -194,4 +197,36 @@ func TestListDownloads_CombinesActiveAndWaiting(t *testing.T) {
 	assert.Equal(t, "paused_gid", downloads[1].GID)
 	assert.Equal(t, "paused", downloads[1].Status)
 	assert.Equal(t, "https://example.com/b.zip", downloads[1].URL)
+}
+
+func TestSetPort_RedirectsRequests(t *testing.T) {
+	var firstHits, secondHits int
+
+	first := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		firstHits++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":"wails-dm","result":{"version":"1.37.0"}}`))
+	}))
+	defer first.Close()
+
+	second := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		secondHits++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":"wails-dm","result":{"version":"1.37.0"}}`))
+	}))
+	defer second.Close()
+
+	client := rpc.NewAria2Client(first.URL)
+	require.NoError(t, client.Ping())
+
+	_, portValue, err := net.SplitHostPort(strings.TrimPrefix(second.URL, "http://"))
+	require.NoError(t, err)
+	port, err := strconv.Atoi(portValue)
+	require.NoError(t, err)
+
+	client.SetPort(port)
+	require.NoError(t, client.Ping())
+
+	assert.Equal(t, 1, firstHits)
+	assert.Equal(t, 1, secondHits)
 }

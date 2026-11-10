@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"sync"
 
 	"github.com/bal16/ariadm/internal/domain/task"
 )
 
 type Aria2Client struct {
+	mu     sync.RWMutex
 	rpcURL string
 	client *http.Client
 }
@@ -22,6 +24,20 @@ func NewAria2Client(url string) *Aria2Client {
 		rpcURL: url,
 		client: &http.Client{},
 	}
+}
+
+// SetPort points the client at the daemon that was actually started. The engine
+// picks its port at runtime, so the endpoint cannot be fixed at construction.
+func (c *Aria2Client) SetPort(port int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.rpcURL = fmt.Sprintf("http://127.0.0.1:%d/jsonrpc", port)
+}
+
+func (c *Aria2Client) endpoint() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.rpcURL
 }
 
 // JSON-RPC specification structures
@@ -58,7 +74,7 @@ func (c *Aria2Client) call(method string, params []interface{}) (json.RawMessage
 		return nil, err
 	}
 
-	resp, err := c.client.Post(c.rpcURL, "application/json", bytes.NewBuffer(body))
+	resp, err := c.client.Post(c.endpoint(), "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf("rpc connection failed: %w", err)
 	}
