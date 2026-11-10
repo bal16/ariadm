@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 )
 
 // PortKind is the result of classifying a candidate RPC port.
@@ -59,8 +60,10 @@ func SelectEnginePort(ports []int, prober Prober, canBind func(int) bool) (int, 
 
 	// Reclaim every orphan, even one left on a fallback port by an earlier run.
 	// Leaving it alive would let two engines coexist.
+	reclaimed := make(map[int]bool)
 	for _, status := range statuses {
 		if status.Kind == PortOurs {
+			reclaimed[status.Port] = true
 			_ = prober.Reclaim(status.Port)
 		}
 	}
@@ -71,12 +74,32 @@ func SelectEnginePort(ports []int, prober Prober, canBind func(int) bool) (int, 
 		}
 		// Reclaimed ports need a moment to be bindable again, and a port may
 		// have been taken since the classification pass.
-		if canBind(status.Port) {
+		if waitForBind(status.Port, canBind, reclaimed[status.Port]) {
 			return status.Port, statuses, nil
 		}
 	}
 
 	return 0, statuses, fmt.Errorf("%w: %s", ErrNoPortAvailable, formatPortStatuses(statuses))
+}
+
+// waitForBind reports whether port can be bound. A reclaimed port is polled for
+// a while because the previous process may not have released it yet.
+func waitForBind(port int, canBind func(int) bool, reclaimed bool) bool {
+	if canBind(port) {
+		return true
+	}
+	if !reclaimed {
+		return false
+	}
+
+	deadline := time.Now().Add(8 * time.Second)
+	for time.Now().Before(deadline) {
+		time.Sleep(250 * time.Millisecond)
+		if canBind(port) {
+			return true
+		}
+	}
+	return false
 }
 
 func formatPortStatuses(statuses []PortStatus) string {
