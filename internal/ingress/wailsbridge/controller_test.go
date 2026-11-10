@@ -23,6 +23,8 @@ func (m *MockDownloadEngine) AddURI(url, path, fileName string) (string, error) 
 }
 func (m *MockDownloadEngine) Pause(gid string) error   { return m.Called(gid).Error(0) }
 func (m *MockDownloadEngine) Unpause(gid string) error { return m.Called(gid).Error(0) }
+func (m *MockDownloadEngine) PauseAll() error          { return m.Called().Error(0) }
+func (m *MockDownloadEngine) UnpauseAll() error        { return m.Called().Error(0) }
 func (m *MockDownloadEngine) Remove(gid string) error  { return m.Called(gid).Error(0) }
 func (m *MockDownloadEngine) RemoveDownloadResult(gid string) error {
 	return m.Called(gid).Error(0)
@@ -140,4 +142,38 @@ func TestWailsBridge_TogglePauseState_Integration(t *testing.T) {
 	updatedQueue, err := bridge.GetTasks()
 	require.NoError(t, err)
 	assert.Equal(t, "paused", string(updatedQueue[0].Status))
+}
+
+func TestWailsBridge_PauseResumeAll_Integration(t *testing.T) {
+	bridge, mockEngine, _, teardown := setupIntegrationTest(t)
+	defer teardown()
+
+	targetURL := "https://files.minecraft.net/modpack.zip"
+	mockedGID := "aria2_gid_bulk_1"
+
+	mockEngine.On("AddURI", targetURL, "/tmp/downloads").Return(mockedGID, nil)
+	mockEngine.On("PauseAll").Return(nil)
+	mockEngine.On("UnpauseAll").Return(nil)
+	mockEngine.On("TellStatus", mockedGID).Return(&task.Aria2Status{
+		GID:    mockedGID,
+		Status: "active",
+	}, nil)
+
+	createdTask, err := bridge.TriggerNewDownload(targetURL)
+	require.NoError(t, err)
+	require.NotNil(t, createdTask)
+
+	require.NoError(t, bridge.PauseAllTasks())
+
+	pausedQueue, err := bridge.GetTasks()
+	require.NoError(t, err)
+	require.Len(t, pausedQueue, 1)
+	assert.Equal(t, "paused", string(pausedQueue[0].Status))
+
+	require.NoError(t, bridge.ResumeAllTasks())
+
+	activeQueue, err := bridge.GetTasks()
+	require.NoError(t, err)
+	require.Len(t, activeQueue, 1)
+	assert.Equal(t, "active", string(activeQueue[0].Status))
 }

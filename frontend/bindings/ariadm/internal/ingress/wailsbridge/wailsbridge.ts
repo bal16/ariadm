@@ -34,6 +34,20 @@ export function GetTasks(): $CancellablePromise<(task$0.Task | null)[] | null> {
 }
 
 /**
+ * PauseAllTasks halts every active and waiting download in the queue
+ */
+export function PauseAllTasks(): $CancellablePromise<void> {
+    return $Call.ByID(2985455647);
+}
+
+/**
+ * ResumeAllTasks resumes every paused download in the queue
+ */
+export function ResumeAllTasks(): $CancellablePromise<void> {
+    return $Call.ByID(2510230190);
+}
+
+/**
  * SaveApplicationConfig saves configuration updates and syncs them live to aria2c
  */
 export function SaveApplicationConfig(cfg: config$0.AppConfig | null): $CancellablePromise<void> {

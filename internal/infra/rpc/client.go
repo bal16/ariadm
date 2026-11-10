@@ -117,6 +117,18 @@ func (c *Aria2Client) Unpause(gid string) error {
 	return err
 }
 
+// PauseAll halts every active and waiting download in aria2c's queue
+func (c *Aria2Client) PauseAll() error {
+	_, err := c.call("aria2.pauseAll", []interface{}{})
+	return err
+}
+
+// UnpauseAll resumes every paused download in aria2c's queue
+func (c *Aria2Client) UnpauseAll() error {
+	_, err := c.call("aria2.unpauseAll", []interface{}{})
+	return err
+}
+
 // ChangeGlobalOption dynamically alters running engine traits (e.g. speed limits limits)
 func (c *Aria2Client) ChangeGlobalOption(options map[string]string) error {
 	_, err := c.call("aria2.changeGlobalOption", []interface{}{options})

@@ -34,6 +34,8 @@ func (m *DownloadEngineMock) AddURI(url, path string, fileName string) (string, 
 }
 func (m *DownloadEngineMock) Pause(gid string) error   { return m.Called(gid).Error(0) }
 func (m *DownloadEngineMock) Unpause(gid string) error { return m.Called(gid).Error(0) }
+func (m *DownloadEngineMock) PauseAll() error          { return m.Called().Error(0) }
+func (m *DownloadEngineMock) UnpauseAll() error        { return m.Called().Error(0) }
 func (m *DownloadEngineMock) Remove(gid string) error  { return m.Called(gid).Error(0) }
 func (m *DownloadEngineMock) RemoveDownloadResult(gid string) error {
 	return m.Called(gid).Error(0)
@@ -368,4 +370,92 @@ func TestTaskService_ReconcileSessionTasks_SkipsTerminalStates(t *testing.T) {
 
 	// TellStatus must NEVER be called for terminal states
 	mockEngine.AssertNotCalled(t, "TellStatus", mock.Anything)
+}
+
+func TestPauseAllTasks_PausesActiveAndWaiting(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	activeTask := &task.Task{ID: "local_active", GID: "gid_active", Status: task.StatusActive, Speed: 1024}
+	waitingTask := &task.Task{ID: "local_waiting", GID: "gid_waiting", Status: task.StatusWaiting}
+	pausedTask := &task.Task{ID: "local_paused", GID: "gid_paused", Status: task.StatusPaused}
+	completedTask := &task.Task{ID: "local_complete", GID: "gid_complete", Status: task.StatusCompleted}
+
+	engine.On("PauseAll").Return(nil)
+	taskRepo.On("GetAll").Return([]*task.Task{activeTask, waitingTask, pausedTask, completedTask}, nil)
+	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == activeTask.ID && t.Status == task.StatusPaused && t.Speed == 0
+	})).Return(nil)
+	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == waitingTask.ID && t.Status == task.StatusPaused
+	})).Return(nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.PauseAllTasks()
+
+	assert.NoError(t, err)
+	taskRepo.AssertNumberOfCalls(t, "Update", 2)
+	taskRepo.AssertNotCalled(t, "Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == pausedTask.ID || t.ID == completedTask.ID
+	}))
+	engine.AssertExpectations(t)
+}
+
+func TestPauseAllTasks_EngineFailureSkipsDatabase(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	engine.On("PauseAll").Return(errors.New("rpc connection failed"))
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.PauseAllTasks()
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "rpc connection failed")
+	taskRepo.AssertNotCalled(t, "GetAll")
+	taskRepo.AssertNotCalled(t, "Update", mock.Anything)
+}
+
+func TestResumeAllTasks_ResumesOnlyPaused(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	pausedTask := &task.Task{ID: "local_paused", GID: "gid_paused", Status: task.StatusPaused}
+	activeTask := &task.Task{ID: "local_active", GID: "gid_active", Status: task.StatusActive}
+	completedTask := &task.Task{ID: "local_complete", GID: "gid_complete", Status: task.StatusCompleted}
+
+	engine.On("UnpauseAll").Return(nil)
+	taskRepo.On("GetAll").Return([]*task.Task{pausedTask, activeTask, completedTask}, nil)
+	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == pausedTask.ID && t.Status == task.StatusActive
+	})).Return(nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.ResumeAllTasks()
+
+	assert.NoError(t, err)
+	taskRepo.AssertNumberOfCalls(t, "Update", 1)
+	taskRepo.AssertNotCalled(t, "Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == activeTask.ID || t.ID == completedTask.ID
+	}))
+	engine.AssertExpectations(t)
+}
+
+func TestResumeAllTasks_EngineFailureSkipsDatabase(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	engine.On("UnpauseAll").Return(errors.New("rpc connection failed"))
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.ResumeAllTasks()
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "rpc connection failed")
+	taskRepo.AssertNotCalled(t, "GetAll")
+	taskRepo.AssertNotCalled(t, "Update", mock.Anything)
 }

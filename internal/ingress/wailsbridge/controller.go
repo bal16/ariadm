@@ -50,6 +50,16 @@ func (b *WailsBridge) ToggleTaskPauseState(taskID string) error {
 	return err
 }
 
+// PauseAllTasks halts every active and waiting download in the queue
+func (b *WailsBridge) PauseAllTasks() error {
+	return b.taskService.PauseAllTasks()
+}
+
+// ResumeAllTasks resumes every paused download in the queue
+func (b *WailsBridge) ResumeAllTasks() error {
+	return b.taskService.ResumeAllTasks()
+}
+
 // DeleteTask removes a download from aria2c's queue and wipes its record from the local database
 func (b *WailsBridge) DeleteTask(taskID string, deleteFiles bool) error {
 	return b.taskService.DeleteTask(taskID, deleteFiles)

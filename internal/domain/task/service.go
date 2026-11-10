@@ -116,6 +116,61 @@ func (s *TaskService) TogglePauseTask(id string) error {
 	return s.taskRepo.Update(t)
 }
 
+// PauseAllTasks halts every active and waiting download in the engine, then
+// mirrors the new paused state into the local tracking database. Completed and
+// errored tasks are terminal and stay untouched.
+func (s *TaskService) PauseAllTasks() error {
+	if err := s.engine.PauseAll(); err != nil {
+		return err
+	}
+
+	tasks, err := s.taskRepo.GetAll()
+	if err != nil {
+		return err
+	}
+
+	for _, t := range tasks {
+		if t.Status != StatusActive && t.Status != StatusWaiting {
+			continue
+		}
+
+		t.Status = StatusPaused
+		t.Speed = 0
+		if err := s.taskRepo.Update(t); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ResumeAllTasks resumes every paused download in the engine, then mirrors the
+// active state back into the local tracking database so the telemetry loop
+// starts polling those tasks again.
+func (s *TaskService) ResumeAllTasks() error {
+	if err := s.engine.UnpauseAll(); err != nil {
+		return err
+	}
+
+	tasks, err := s.taskRepo.GetAll()
+	if err != nil {
+		return err
+	}
+
+	for _, t := range tasks {
+		if t.Status != StatusPaused {
+			continue
+		}
+
+		t.Status = StatusActive
+		if err := s.taskRepo.Update(t); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *TaskService) GetAllTasks() ([]*Task, error) {
 	return s.taskRepo.GetAll()
 }
