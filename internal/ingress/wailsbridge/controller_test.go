@@ -29,6 +29,7 @@ func (m *MockDownloadEngine) Pause(gid string) error   { return m.Called(gid).Er
 func (m *MockDownloadEngine) Unpause(gid string) error { return m.Called(gid).Error(0) }
 func (m *MockDownloadEngine) PauseAll() error          { return m.Called().Error(0) }
 func (m *MockDownloadEngine) UnpauseAll() error        { return m.Called().Error(0) }
+func (m *MockDownloadEngine) Ping() error              { return m.Called().Error(0) }
 func (m *MockDownloadEngine) Remove(gid string) error  { return m.Called(gid).Error(0) }
 func (m *MockDownloadEngine) RemoveDownloadResult(gid string) error {
 	return m.Called(gid).Error(0)
@@ -39,6 +40,13 @@ func (m *MockDownloadEngine) TellStatus(gid string) (*task.Aria2Status, error) {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*task.Aria2Status), args.Error(1)
+}
+func (m *MockDownloadEngine) ListDownloads() ([]*task.Aria2Status, error) {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*task.Aria2Status), args.Error(1)
 }
 func (m *MockDownloadEngine) ChangeGlobalOption(options map[string]string) error {
 	return m.Called(options).Error(0)

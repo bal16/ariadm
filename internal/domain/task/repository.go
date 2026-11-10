@@ -14,6 +14,7 @@ type TaskRepository interface {
 type Aria2Status struct {
 	GID             string
 	Status          string // "active", "waiting", "paused", "error", "complete", "removed"
+	URL             string // First URI reported for the download
 	TotalLength     int64
 	CompletedLength int64
 	DownloadSpeed   int64
@@ -29,7 +30,9 @@ type DownloadEngine interface {
 	Unpause(gid string) error
 	PauseAll() error                             // Pause every active and waiting download
 	UnpauseAll() error                           // Resume every paused download
+	Ping() error                                 // Verify the daemon RPC endpoint is responsive
 	TellStatus(gid string) (*Aria2Status, error) // Fetch live progress snapshot for one GID
+	ListDownloads() ([]*Aria2Status, error)      // List active and waiting (including paused) downloads
 	Remove(gid string) error                     // Stop and remove an active/paused/waiting download
 	RemoveDownloadResult(gid string) error       // Purge a completed/error/removed entry from aria2c's memory
 }

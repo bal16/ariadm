@@ -74,6 +74,40 @@ func isAlreadyUnpaused(err error) bool {
 	return strings.Contains(msg, "cannot be unpaused") || strings.Contains(msg, "is not paused")
 }
 
+// mapLiveStatus converts an aria2 status string into the local state machine.
+func mapLiveStatus(status string) Status {
+	switch status {
+	case "complete":
+		return StatusCompleted
+	case "error":
+		return StatusError
+	default:
+		return Status(status)
+	}
+}
+
+// WaitForEngine polls the daemon until it answers an RPC request. The startup
+// reconciliation must not run before aria2 has loaded its session file,
+// otherwise restored GIDs look missing and get re-injected as duplicates.
+func (s *TaskService) WaitForEngine(timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+
+	for time.Now().Before(deadline) {
+		err := s.engine.Ping()
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	if lastErr == nil {
+		lastErr = errors.New("timeout waiting for aria2c RPC")
+	}
+	return lastErr
+}
+
 // captureLiveMetadata copies the filename and byte counters from aria2 into the
 // local task. It is called before the daemon may be stopped so a later session
 // can resume the same file instead of downloading it again under a new name.
@@ -322,22 +356,33 @@ func (s *TaskService) SyncAndGetAllTasks() ([]*Task, error) {
 		}
 
 		// Map aria2c status string to our internal Status type
-		newStatus := Status(live.Status) // e.g. "active", "paused", "complete", "error"
-		if live.Status == "complete" {
-			newStatus = StatusCompleted // use our canonical constant value
+		newStatus := mapLiveStatus(live.Status)
+
+		// aria2 reports zero byte counters for a paused download restored from
+		// its session file until it is resumed. Keep the last known progress
+		// instead of wiping it from the UI.
+		totalLength := live.TotalLength
+		completedLength := live.CompletedLength
+		speed := live.DownloadSpeed
+		if newStatus == StatusPaused {
+			speed = 0
+			if totalLength == 0 {
+				totalLength = t.TotalLength
+				completedLength = t.CompletedLength
+			}
 		}
 
 		// Detect whether any field actually changed before writing to SQLite
-		changed := t.TotalLength != live.TotalLength ||
-			t.CompletedLength != live.CompletedLength ||
-			t.Speed != live.DownloadSpeed ||
+		changed := t.TotalLength != totalLength ||
+			t.CompletedLength != completedLength ||
+			t.Speed != speed ||
 			t.Status != newStatus ||
 			(live.FileName != "" && t.FileName != live.FileName)
 
 		if changed {
-			t.TotalLength = live.TotalLength
-			t.CompletedLength = live.CompletedLength
-			t.Speed = live.DownloadSpeed
+			t.TotalLength = totalLength
+			t.CompletedLength = completedLength
+			t.Speed = speed
 			t.Status = newStatus
 			if live.FileName != "" {
 				t.FileName = live.FileName
@@ -350,56 +395,129 @@ func (s *TaskService) SyncAndGetAllTasks() ([]*Task, error) {
 	return tasks, nil
 }
 
-// ReconcileSessionTasks inspects the local database tracking queue on startup and
-// automatically heals or re-injects tasks that were dropped from active daemon memory.
+// ReconcileSessionTasks aligns SQLite with aria2's restored session on startup.
+// aria2 normally loads its own session file and keeps the same GIDs, so the
+// database rows usually just need their status confirmed. Re-injection stays as
+// a fallback for a missing session file or downloads created by older versions.
 func (s *TaskService) ReconcileSessionTasks() error {
 	tasks, err := s.taskRepo.GetAll()
 	if err != nil {
 		return err
 	}
 
-	// downloadDir := s.configProvider.GetDefaultDownloadPath()
 	cfg, err := s.configRepo.Load()
 	if err != nil {
 		return errors.New("failed to load configuration details")
 	}
 
+	knownGIDs := make(map[string]bool, len(tasks))
 	for _, t := range tasks {
-		// We only care about tracking states that should actively exist in a runtime queue
-		if t.Status == StatusActive || t.Status == StatusPaused {
-			_, err := s.engine.TellStatus(t.GID)
-			if err != nil {
-				// GID is dead or missing from the current aria2c process session context
-				// Re-inject the resource URL. Aria2c automatically picks up existing files natively.
-				log.Printf("%v", t)
-				newGID, rpcErr := s.engine.ResumeURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
-				if rpcErr != nil {
-					// If the engine fails completely, flag the task tracking row locally as an error
-					log.Printf("error happen %v", rpcErr)
-					t.Status = StatusError
-					_ = s.taskRepo.Update(t)
-					continue
-				}
+		knownGIDs[t.GID] = true
+	}
 
-				// Map the freshly generated runtime identifier back to the system entity record
-				t.GID = newGID
+	for _, t := range tasks {
+		// We only care about tracking states that should exist in a runtime queue
+		if t.Status != StatusActive && t.Status != StatusWaiting && t.Status != StatusPaused {
+			continue
+		}
 
-				// A paused task must stay paused after re-injection. Otherwise
-				// aria2 starts transferring behind the UI, and a later resume
-				// is rejected because the download is already active.
-				if t.Status == StatusPaused {
-					if pauseErr := s.engine.Pause(newGID); pauseErr != nil {
-						log.Printf("failed to restore paused state for task %s: %v", t.ID, pauseErr)
-						t.Status = StatusActive
-					}
-				}
-
-				err = s.taskRepo.Update(t)
-				if err != nil {
+		live, statusErr := s.engine.TellStatus(t.GID)
+		if statusErr == nil {
+			// The session restored this GID. Do not touch byte counters: aria2
+			// reports zeroes for paused downloads until they are resumed again.
+			changed := false
+			if liveStatus := mapLiveStatus(live.Status); liveStatus != t.Status {
+				t.Status = liveStatus
+				changed = true
+			}
+			if t.Status == StatusPaused && t.Speed != 0 {
+				t.Speed = 0
+				changed = true
+			}
+			if t.FileName == "" && live.FileName != "" {
+				t.FileName = live.FileName
+				changed = true
+			}
+			if changed {
+				if err := s.taskRepo.Update(t); err != nil {
 					return err
 				}
 			}
+			continue
 		}
+
+		// Only heal a genuinely missing GID. Other RPC failures (daemon still
+		// starting, transient connection errors) would otherwise create
+		// duplicate downloads for a session that is about to be restored.
+		if !isGIDNotFound(statusErr) {
+			log.Printf("failed to inspect task %s during reconciliation: %v", t.ID, statusErr)
+			continue
+		}
+
+		newGID, rpcErr := s.engine.ResumeURI(t.URL, cfg.DefaultDownloadPath, t.FileName)
+		if rpcErr != nil {
+			log.Printf("failed to re-inject task %s: %v", t.ID, rpcErr)
+			t.Status = StatusError
+			_ = s.taskRepo.Update(t)
+			continue
+		}
+
+		t.GID = newGID
+		knownGIDs[newGID] = true
+
+		// A paused task must stay paused after re-injection. Otherwise aria2
+		// starts transferring behind the UI, and a later resume is rejected
+		// because the download is already active.
+		if t.Status == StatusPaused {
+			if pauseErr := s.engine.Pause(newGID); pauseErr != nil {
+				log.Printf("failed to restore paused state for task %s: %v", t.ID, pauseErr)
+				t.Status = StatusActive
+			}
+		}
+
+		if err := s.taskRepo.Update(t); err != nil {
+			return err
+		}
+	}
+
+	// Adopt downloads that aria2 restored from its session file but that are
+	// missing from SQLite (for example after a database reset). Without this
+	// they would keep running invisibly and could not be controlled from the UI.
+	downloads, err := s.engine.ListDownloads()
+	if err != nil {
+		log.Printf("failed to list engine downloads during reconciliation: %v", err)
+		return nil
+	}
+
+	for _, live := range downloads {
+		if knownGIDs[live.GID] {
+			continue
+		}
+		if live.URL == "" {
+			log.Printf("skipping session download %s without a source URL", live.GID)
+			continue
+		}
+
+		t := &Task{
+			ID:              "local_" + live.GID,
+			GID:             live.GID,
+			URL:             live.URL,
+			FileName:        live.FileName,
+			TotalLength:     live.TotalLength,
+			CompletedLength: live.CompletedLength,
+			Speed:           live.DownloadSpeed,
+			Status:          mapLiveStatus(live.Status),
+			CreatedAt:       time.Now(),
+		}
+		if t.Status == StatusPaused {
+			t.Speed = 0
+		}
+
+		if err := s.taskRepo.Create(t); err != nil {
+			log.Printf("failed to adopt session download %s: %v", live.GID, err)
+			continue
+		}
+		knownGIDs[live.GID] = true
 	}
 
 	return nil

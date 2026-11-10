@@ -161,30 +161,92 @@ func (c *Aria2Client) RemoveDownloadResult(gid string) error {
 	return err
 }
 
+// Ping verifies that the aria2c RPC endpoint is responsive.
+func (c *Aria2Client) Ping() error {
+	_, err := c.call("aria2.getVersion", []interface{}{})
+	return err
+}
+
 // TellStatus fetches a live progress snapshot from aria2c for a single GID
 func (c *Aria2Client) TellStatus(gid string) (*task.Aria2Status, error) {
 	// Request only the fields we need to avoid oversized payloads
-	keys := []string{"gid", "status", "totalLength", "completedLength", "downloadSpeed", "files"}
-	rawResult, err := c.call("aria2.tellStatus", []interface{}{gid, keys})
+	rawResult, err := c.call("aria2.tellStatus", []interface{}{gid, statusKeys()})
 	if err != nil {
 		return nil, err
 	}
 
-	// aria2 returns all numeric fields as strings — we decode into a raw map first
-	var raw struct {
-		GID             string `json:"gid"`
-		Status          string `json:"status"`
-		TotalLength     string `json:"totalLength"`
-		CompletedLength string `json:"completedLength"`
-		DownloadSpeed   string `json:"downloadSpeed"`
-		Files           []struct {
-			Path string `json:"path"`
-		} `json:"files"`
+	return decodeStatus(rawResult)
+}
+
+// ListDownloads returns every download that aria2c currently holds in its
+// active or waiting queue. Paused downloads restored from a session file are
+// reported by tellWaiting, so they are included as well.
+func (c *Aria2Client) ListDownloads() ([]*task.Aria2Status, error) {
+	keys := statusKeys()
+
+	activeRaw, err := c.call("aria2.tellActive", []interface{}{keys})
+	if err != nil {
+		return nil, err
 	}
+	active, err := decodeStatusList(activeRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	// A large page size keeps adoption of session-restored downloads in one
+	// round trip. Realistic queues are far below this limit.
+	waitingRaw, err := c.call("aria2.tellWaiting", []interface{}{0, 1000, keys})
+	if err != nil {
+		return nil, err
+	}
+	waiting, err := decodeStatusList(waitingRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(active, waiting...), nil
+}
+
+func statusKeys() []string {
+	return []string{"gid", "status", "totalLength", "completedLength", "downloadSpeed", "files"}
+}
+
+type statusPayload struct {
+	GID             string `json:"gid"`
+	Status          string `json:"status"`
+	TotalLength     string `json:"totalLength"`
+	CompletedLength string `json:"completedLength"`
+	DownloadSpeed   string `json:"downloadSpeed"`
+	Files           []struct {
+		Path string `json:"path"`
+		URIs []struct {
+			URI string `json:"uri"`
+		} `json:"uris"`
+	} `json:"files"`
+}
+
+func decodeStatus(rawResult json.RawMessage) (*task.Aria2Status, error) {
+	var raw statusPayload
 	if err := json.Unmarshal(rawResult, &raw); err != nil {
 		return nil, fmt.Errorf("tellStatus: failed to decode aria2 response: %w", err)
 	}
+	return toAria2Status(raw), nil
+}
 
+func decodeStatusList(rawResult json.RawMessage) ([]*task.Aria2Status, error) {
+	var raw []statusPayload
+	if err := json.Unmarshal(rawResult, &raw); err != nil {
+		return nil, fmt.Errorf("tellStatus: failed to decode aria2 response list: %w", err)
+	}
+
+	statuses := make([]*task.Aria2Status, 0, len(raw))
+	for _, item := range raw {
+		statuses = append(statuses, toAria2Status(item))
+	}
+	return statuses, nil
+}
+
+func toAria2Status(raw statusPayload) *task.Aria2Status {
 	parseI64 := func(s string) int64 {
 		v, _ := strconv.ParseInt(s, 10, 64)
 		return v
@@ -192,11 +254,15 @@ func (c *Aria2Client) TellStatus(gid string) (*task.Aria2Status, error) {
 
 	// Extract just the base filename from the full filesystem path
 	fileName := ""
+	downloadURL := ""
 	var filePaths []string
 	if len(raw.Files) > 0 {
 		for _, f := range raw.Files {
 			if f.Path != "" {
 				filePaths = append(filePaths, f.Path)
+			}
+			if downloadURL == "" && len(f.URIs) > 0 {
+				downloadURL = f.URIs[0].URI
 			}
 		}
 		if len(filePaths) > 0 {
@@ -207,10 +273,11 @@ func (c *Aria2Client) TellStatus(gid string) (*task.Aria2Status, error) {
 	return &task.Aria2Status{
 		GID:             raw.GID,
 		Status:          raw.Status,
+		URL:             downloadURL,
 		TotalLength:     parseI64(raw.TotalLength),
 		CompletedLength: parseI64(raw.CompletedLength),
 		DownloadSpeed:   parseI64(raw.DownloadSpeed),
 		FileName:        fileName,
 		Files:           filePaths,
-	}, nil
+	}
 }

@@ -40,6 +40,7 @@ func (m *DownloadEngineMock) Pause(gid string) error   { return m.Called(gid).Er
 func (m *DownloadEngineMock) Unpause(gid string) error { return m.Called(gid).Error(0) }
 func (m *DownloadEngineMock) PauseAll() error          { return m.Called().Error(0) }
 func (m *DownloadEngineMock) UnpauseAll() error        { return m.Called().Error(0) }
+func (m *DownloadEngineMock) Ping() error              { return m.Called().Error(0) }
 func (m *DownloadEngineMock) Remove(gid string) error  { return m.Called(gid).Error(0) }
 func (m *DownloadEngineMock) RemoveDownloadResult(gid string) error {
 	return m.Called(gid).Error(0)
@@ -50,6 +51,13 @@ func (m *DownloadEngineMock) TellStatus(gid string) (*task.Aria2Status, error) {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*task.Aria2Status), args.Error(1)
+}
+func (m *DownloadEngineMock) ListDownloads() ([]*task.Aria2Status, error) {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*task.Aria2Status), args.Error(1)
 }
 
 type ConfigRepositoryMock struct{ mock.Mock }
@@ -315,6 +323,9 @@ func TestTaskService_ReconcileSessionTasks_OrphanRecovery(t *testing.T) {
 		return t.ID == "local_orphan_2" && t.GID == "new_gid_2" && t.Status == task.StatusPaused
 	})).Return(nil)
 
+	// The engine has no additional session downloads to adopt
+	mockEngine.On("ListDownloads").Return([]*task.Aria2Status{}, nil)
+
 	err := service.ReconcileSessionTasks()
 
 	assert.NoError(t, err)
@@ -352,6 +363,8 @@ func TestTaskService_ReconcileSessionTasks_EngineFailure(t *testing.T) {
 		return t.ID == "local_fail" && t.Status == task.StatusError
 	})).Return(nil)
 
+	mockEngine.On("ListDownloads").Return([]*task.Aria2Status{}, nil)
+
 	err := service.ReconcileSessionTasks()
 
 	// The function should not propagate this error — it logs and continues
@@ -382,6 +395,7 @@ func TestTaskService_ReconcileSessionTasks_SkipsTerminalStates(t *testing.T) {
 
 	mockConfig.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
 	mockRepo.On("GetAll").Return([]*task.Task{completedTask, errorTask}, nil)
+	mockEngine.On("ListDownloads").Return([]*task.Aria2Status{}, nil)
 
 	err := service.ReconcileSessionTasks()
 
@@ -640,4 +654,180 @@ func TestResumeAllTasks_MarksErrorWhenReinjectionFails(t *testing.T) {
 	assert.NoError(t, err)
 	taskRepo.AssertExpectations(t)
 	engine.AssertExpectations(t)
+}
+
+func TestReconcileSessionTasks_KeepsRestoredGID(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	restored := &task.Task{
+		ID:              "local_restored",
+		GID:             "restored_gid",
+		URL:             "https://example.com/file.zip",
+		Status:          task.StatusPaused,
+		Speed:           123,
+		TotalLength:     1000,
+		CompletedLength: 400,
+	}
+
+	configRepo.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
+	taskRepo.On("GetAll").Return([]*task.Task{restored}, nil)
+	// aria2 reports zero counters for a paused download restored from its
+	// session file, so reconciliation must not wipe the known progress.
+	engine.On("TellStatus", restored.GID).Return(&task.Aria2Status{
+		GID:             restored.GID,
+		Status:          "paused",
+		FileName:        "file.zip",
+		TotalLength:     0,
+		CompletedLength: 0,
+	}, nil)
+	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == restored.ID &&
+			t.GID == restored.GID &&
+			t.Status == task.StatusPaused &&
+			t.Speed == 0 &&
+			t.TotalLength == 1000 &&
+			t.CompletedLength == 400 &&
+			t.FileName == "file.zip"
+	})).Return(nil)
+	engine.On("ListDownloads").Return([]*task.Aria2Status{
+		{GID: restored.GID, Status: "paused"},
+	}, nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.ReconcileSessionTasks()
+
+	assert.NoError(t, err)
+	taskRepo.AssertExpectations(t)
+	engine.AssertNotCalled(t, "ResumeURI", mock.Anything, mock.Anything)
+}
+
+func TestReconcileSessionTasks_AdoptsSessionRestoredDownload(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	configRepo.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
+	taskRepo.On("GetAll").Return([]*task.Task{}, nil)
+
+	restored := &task.Aria2Status{
+		GID:             "session_gid",
+		Status:          "active",
+		URL:             "https://example.com/session.zip",
+		FileName:        "session.zip",
+		TotalLength:     4096,
+		CompletedLength: 1024,
+		DownloadSpeed:   512,
+	}
+	engine.On("ListDownloads").Return([]*task.Aria2Status{restored}, nil)
+
+	taskRepo.On("Create", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == "local_session_gid" &&
+			t.GID == restored.GID &&
+			t.URL == restored.URL &&
+			t.FileName == restored.FileName &&
+			t.Status == task.StatusActive &&
+			t.TotalLength == restored.TotalLength &&
+			t.CompletedLength == restored.CompletedLength
+	})).Return(nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.ReconcileSessionTasks()
+
+	assert.NoError(t, err)
+	taskRepo.AssertExpectations(t)
+	engine.AssertExpectations(t)
+}
+
+func TestReconcileSessionTasks_TransientErrorDoesNotReinject(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	existing := &task.Task{
+		ID:     "local_transient",
+		GID:    "transient_gid",
+		URL:    "https://example.com/file.zip",
+		Status: task.StatusActive,
+	}
+
+	configRepo.On("Load").Return(&config.AppConfig{DefaultDownloadPath: "/downloads"}, nil)
+	taskRepo.On("GetAll").Return([]*task.Task{existing}, nil)
+	engine.On("TellStatus", existing.GID).Return(nil, errors.New("rpc connection failed"))
+	engine.On("ListDownloads").Return([]*task.Aria2Status{}, nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.ReconcileSessionTasks()
+
+	assert.NoError(t, err)
+	engine.AssertNotCalled(t, "ResumeURI", mock.Anything, mock.Anything)
+	taskRepo.AssertNotCalled(t, "Update", mock.Anything)
+}
+
+func TestWaitForEngine_SucceedsWhenDaemonResponds(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	engine.On("Ping").Return(nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.WaitForEngine(100 * time.Millisecond)
+
+	assert.NoError(t, err)
+	engine.AssertExpectations(t)
+}
+
+func TestWaitForEngine_ReturnsLastErrorOnTimeout(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	engine.On("Ping").Return(errors.New("connection refused"))
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	err := service.WaitForEngine(120 * time.Millisecond)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "connection refused")
+}
+
+func TestSyncAndGetAllTasks_PausedStatusKeepsProgress(t *testing.T) {
+	taskRepo := new(TaskRepositoryMock)
+	engine := new(DownloadEngineMock)
+	configRepo := new(ConfigRepositoryMock)
+
+	active := &task.Task{
+		ID:              "local_pausing",
+		GID:             "pausing_gid",
+		Status:          task.StatusActive,
+		TotalLength:     1000,
+		CompletedLength: 500,
+		Speed:           100,
+	}
+
+	taskRepo.On("GetAll").Return([]*task.Task{active}, nil)
+	engine.On("TellStatus", active.GID).Return(&task.Aria2Status{
+		GID:             active.GID,
+		Status:          "paused",
+		FileName:        "file.zip",
+		TotalLength:     0,
+		CompletedLength: 0,
+		DownloadSpeed:   0,
+	}, nil)
+	taskRepo.On("Update", mock.MatchedBy(func(t *task.Task) bool {
+		return t.ID == active.ID &&
+			t.Status == task.StatusPaused &&
+			t.Speed == 0 &&
+			t.TotalLength == 1000 &&
+			t.CompletedLength == 500
+	})).Return(nil)
+
+	service := task.NewTaskService(taskRepo, engine, configRepo)
+	tasks, err := service.SyncAndGetAllTasks()
+
+	assert.NoError(t, err)
+	assert.Len(t, tasks, 1)
+	taskRepo.AssertExpectations(t)
 }

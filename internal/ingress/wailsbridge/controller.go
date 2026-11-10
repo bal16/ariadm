@@ -4,9 +4,7 @@ import (
 	"ariadm/internal/domain/config"
 	"ariadm/internal/domain/task"
 	"context"
-	"errors"
 	"log"
-	"net"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -70,8 +68,7 @@ func (b *WailsBridge) ServiceStartup(ctx context.Context, options application.Se
 	b.ctx, b.cancel = context.WithCancel(ctx)
 
 	go func() {
-		targetPort := "127.0.0.1:6800"
-		if err := b.waitForDaemon(targetPort, 5*time.Second); err != nil {
+		if err := b.taskService.WaitForEngine(5 * time.Second); err != nil {
 			log.Printf("Error: Aria2c daemon RPC socket failed to initialize within timeout: %v", err)
 			b.emit("engine:status", "disconnected")
 			return
@@ -129,25 +126,4 @@ func (b *WailsBridge) emit(name string, data ...any) {
 // GetTasks queries, enriches with live aria2c data, and returns all task records
 func (b *WailsBridge) GetTasks() ([]*task.Task, error) {
 	return b.taskService.SyncAndGetAllTasks()
-}
-
-// waitForDaemon polls the network address until it accepts connections or hits the timeout threshold
-func (b *WailsBridge) waitForDaemon(target string, timeout time.Duration) error {
-	deadline := time.Now().Add(timeout)
-
-	for time.Now().Before(deadline) {
-		// Attempt a low-overhead raw TCP connection probe
-		conn, err := net.DialTimeout("tcp", target, 200*time.Millisecond)
-		if err == nil {
-			_ = conn.Close()
-			return nil // Daemon port is active and listening!
-		}
-
-		// Back-off briefly before retrying
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	log.Printf("timeout reached waiting for port %s to open", target)
-
-	return errors.New("timeout reached waiting for daemon to start")
 }
