@@ -7,10 +7,12 @@ pre-commit:
       stage_fixed: true
     - name: oxlint
       glob: "*.{js,jsx,ts,tsx}"
+      exclude: "frontend/bindings/**"
       run: bunx oxlint --fix {staged_files}
       stage_fixed: true
     - name: oxfmt
       glob: "*.{js,jsx,ts,tsx,json,jsonc,css}"
+      exclude: "frontend/bindings/**"
       run: bunx oxfmt {staged_files}
       stage_fixed: true
 
