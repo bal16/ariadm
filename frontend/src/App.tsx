@@ -18,7 +18,8 @@ export default function App() {
   const [showAddTask, setShowAddTask] = createSignal(false);
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
 
-  const { tasks, engineStatus, totalSpeed, togglePause, deleteTask } = useTaskQueue();
+  const { tasks, engineStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
+    useTaskQueue();
   const deletion = useTaskDeletion(deleteTask);
 
   useAppCloseRequest(() => setShowQuitDialog(true));
@@ -40,7 +41,11 @@ export default function App() {
     <div class="h-screen w-screen flex flex-col overflow-hidden relative select-none bg-background text-foreground font-sans antialiased">
       <MenuBar onNewTask={() => setShowAddTask(true)} onPreferences={() => setShowPrefs(true)} />
 
-      <Toolbar onNewTask={() => setShowAddTask(true)} />
+      <Toolbar
+        onNewTask={() => setShowAddTask(true)}
+        onPauseAll={() => void pauseAll()}
+        onResumeAll={() => void resumeAll()}
+      />
 
       <div class="flex-1 p-2 bg-background/50 overflow-hidden">
         <DownloadList tasks={tasks} onTogglePause={togglePause} onDelete={deletion.request} />

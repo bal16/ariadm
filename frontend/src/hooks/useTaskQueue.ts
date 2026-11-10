@@ -5,6 +5,8 @@ import type { Task } from "~/../bindings/ariadm/internal/domain/task/models";
 import {
   DeleteTask,
   GetTasks,
+  PauseAllTasks,
+  ResumeAllTasks,
   ToggleTaskPauseState,
 } from "~/../bindings/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
@@ -15,6 +17,8 @@ export interface TaskQueue {
   engineStatus: Accessor<EngineStatus>;
   totalSpeed: Accessor<number>;
   togglePause: (id: string) => Promise<void>;
+  pauseAll: () => Promise<void>;
+  resumeAll: () => Promise<void>;
   deleteTask: (id: string, deleteFiles: boolean) => Promise<void>;
 }
 
@@ -82,10 +86,26 @@ export function useTaskQueue(): TaskQueue {
     }
   };
 
+  const pauseAll = async () => {
+    try {
+      await PauseAllTasks();
+    } catch (err) {
+      console.error("Failed to pause all tasks:", err);
+    }
+  };
+
+  const resumeAll = async () => {
+    try {
+      await ResumeAllTasks();
+    } catch (err) {
+      console.error("Failed to resume all tasks:", err);
+    }
+  };
+
   const deleteTask = async (id: string, deleteFiles: boolean) => {
     await DeleteTask(id, deleteFiles);
     setTasks((current) => current.filter((task) => task.id !== id));
   };
 
-  return { tasks, engineStatus, totalSpeed, togglePause, deleteTask };
+  return { tasks, engineStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask };
 }

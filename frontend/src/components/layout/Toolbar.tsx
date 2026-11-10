@@ -1,11 +1,16 @@
-import { Plus, Search } from "lucide-solid";
+import { Pause, Play, Plus, Search } from "lucide-solid";
 import { Button } from "~/components/ui/button";
 
 interface ToolbarProps {
   onNewTask: () => void;
+  onPauseAll: () => void;
+  onResumeAll: () => void;
 }
 
 export function Toolbar(props: ToolbarProps) {
+  const secondaryButtonClass =
+    "h-7 px-2.5 text-xs bg-background text-foreground border border-input rounded-sm hover:bg-muted/60 flex items-center space-x-1";
+
   return (
     <div class="flex items-center justify-between p-2 border-b border-border bg-muted/10 z-30">
       <div class="flex items-center space-x-1.5">
@@ -16,6 +21,28 @@ export function Toolbar(props: ToolbarProps) {
         >
           <Plus class="h-3.5 w-3.5" />
           <span>New Task</span>
+        </Button>
+
+        <Button
+          onClick={props.onPauseAll}
+          variant="outline"
+          size="sm"
+          title="Pause all active and waiting downloads"
+          class={secondaryButtonClass}
+        >
+          <Pause class="h-3.5 w-3.5" />
+          <span>Pause All</span>
+        </Button>
+
+        <Button
+          onClick={props.onResumeAll}
+          variant="outline"
+          size="sm"
+          title="Resume all paused downloads"
+          class={secondaryButtonClass}
+        >
+          <Play class="h-3.5 w-3.5" />
+          <span>Resume All</span>
         </Button>
       </div>
       <div class="relative">
