@@ -6,6 +6,7 @@ import (
 	"ariadm/internal/infra/database"
 	"ariadm/internal/infra/rpc"
 	"ariadm/internal/ingress/httpserver"
+	"ariadm/internal/ingress/tray"
 	"ariadm/internal/ingress/wailsbridge"
 	"embed"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -26,6 +28,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed build/trayicon.png
+var trayIcon []byte
+
 // TODO: Handle if port already used
 var (
 	APP_NAME = "ariadm"
@@ -36,9 +41,33 @@ var (
 var (
 	appInstance       *application.App
 	mainWindow        *application.WebviewWindow
+	trayController    *tray.Controller
+	windowMu          sync.Mutex
 	actuallyQuit      atomic.Bool
 	backgroundClosing atomic.Bool
 )
+
+// trayWindow adapts a Wails webview window to the tray's narrow Window
+// interface.
+type trayWindow struct {
+	window *application.WebviewWindow
+}
+
+func (w trayWindow) Show()           { w.window.Show() }
+func (w trayWindow) Hide()           { w.window.Hide() }
+func (w trayWindow) Focus()          { w.window.Focus() }
+func (w trayWindow) IsVisible() bool { return w.window.IsVisible() }
+
+// trayApplication adapts the Wails app so quitting from the tray follows the
+// same path as the frontend's "Quit Completely" action.
+type trayApplication struct {
+	app *application.App
+}
+
+func (a trayApplication) Quit() {
+	actuallyQuit.Store(true)
+	a.app.Quit()
+}
 
 func createMainWindow(app *application.App) *application.WebviewWindow {
 	w := app.Window.NewWithOptions(application.WebviewWindowOptions{
@@ -59,6 +88,70 @@ func createMainWindow(app *application.App) *application.WebviewWindow {
 	})
 
 	return w
+}
+
+func currentMainWindow() *application.WebviewWindow {
+	windowMu.Lock()
+	defer windowMu.Unlock()
+	return mainWindow
+}
+
+// newMainWindow recreates the main window after background mode released it.
+func newMainWindow() *application.WebviewWindow {
+	windowMu.Lock()
+	defer windowMu.Unlock()
+
+	if appInstance == nil {
+		return nil
+	}
+	mainWindow = createMainWindow(appInstance)
+	return mainWindow
+}
+
+// enterBackground destroys the webview so its memory is released, while the
+// download engine keeps running. The window is recreated on demand.
+func enterBackground() {
+	windowMu.Lock()
+	closed := mainWindow != nil
+	if closed {
+		backgroundClosing.Store(true)
+		mainWindow.Close()
+		backgroundClosing.Store(false)
+		mainWindow = nil
+	}
+	windowMu.Unlock()
+
+	if !closed || runtime.GOOS != "linux" {
+		return
+	}
+
+	// WebKitGTK keeps its web/network processes alive after the window is
+	// destroyed. Kill them explicitly so background mode frees RAM.
+	killWebkitChildren()
+	time.Sleep(200 * time.Millisecond)
+}
+
+// setupTray installs the system tray icon and context menu.
+func setupTray(app *application.App, controller *tray.Controller) *application.SystemTray {
+	systray := app.SystemTray.New()
+	systray.SetIcon(trayIcon)
+	systray.SetTooltip(APP_NAME + " - download manager")
+	systray.OnClick(controller.Toggle)
+
+	menu := app.NewMenu()
+	for _, item := range tray.Menu() {
+		if item.Label == "" {
+			menu.AddSeparator()
+			continue
+		}
+		action := item.Action
+		menu.Add(item.Label).OnClick(func(*application.Context) {
+			controller.Handle(action)
+		})
+	}
+	systray.SetMenu(menu)
+
+	return systray
 }
 
 // killWebkitChildren terminates WebKitGTK helper processes that survive
@@ -159,20 +252,33 @@ func main() {
 		SingleInstance: &application.SingleInstanceOptions{
 			UniqueID: "ariadm-lock-8f2k",
 			OnSecondInstanceLaunch: func(data application.SecondInstanceData) {
-				if mainWindow == nil {
-					if appInstance != nil {
-						mainWindow = createMainWindow(appInstance)
-					}
-				}
-				if mainWindow != nil {
-					mainWindow.Show()
-					mainWindow.Focus()
+				if trayController != nil {
+					trayController.Show()
 				}
 			},
 		},
 	})
 
 	appInstance = app
+
+	trayController = tray.NewController(tray.Config{
+		App: trayApplication{app: app},
+		Window: func() tray.Window {
+			window := currentMainWindow()
+			if window == nil {
+				return nil
+			}
+			return trayWindow{window: window}
+		},
+		CreateWindow: func() tray.Window {
+			window := newMainWindow()
+			if window == nil {
+				return nil
+			}
+			return trayWindow{window: window}
+		},
+		HideWindow: enterBackground,
+	})
 
 	// The frontend emits this once the user confirms a full quit.
 	app.Event.On("app:force-quit", func(event *application.CustomEvent) {
@@ -183,21 +289,12 @@ func main() {
 	// The frontend asks to keep running in the background: drop the webview
 	// (freeing its memory) while keeping the download engine alive.
 	app.Event.On("app:background", func(event *application.CustomEvent) {
-		if mainWindow != nil {
-			backgroundClosing.Store(true)
-			mainWindow.Close()
-			backgroundClosing.Store(false)
-			mainWindow = nil
-		}
-		// WebKitGTK keeps its web/network processes alive after the window
-		// is destroyed. Kill them explicitly so background mode frees RAM.
-		if runtime.GOOS == "linux" {
-			killWebkitChildren()
-			time.Sleep(200 * time.Millisecond)
-		}
+		enterBackground()
 	})
 
-	mainWindow = createMainWindow(app)
+	setupTray(app, trayController)
+
+	mainWindow = newMainWindow()
 
 	// Gracefully handle terminal shutdown signals.
 	sig := make(chan os.Signal, 1)
