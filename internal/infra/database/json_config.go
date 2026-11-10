@@ -2,9 +2,10 @@ package database
 
 import (
 	"encoding/json"
-	"github.com/bal16/ariadm/internal/domain/config"
 	"os"
 	"path/filepath"
+
+	"github.com/bal16/ariadm/internal/domain/config"
 )
 
 type JSONConfigRepository struct {

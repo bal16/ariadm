@@ -2,10 +2,11 @@ package task_test
 
 import (
 	"errors"
-	"github.com/bal16/ariadm/internal/domain/config"
-	"github.com/bal16/ariadm/internal/domain/task"
 	"testing"
 	"time"
+
+	"github.com/bal16/ariadm/internal/domain/config"
+	"github.com/bal16/ariadm/internal/domain/task"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

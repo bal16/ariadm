@@ -1,12 +1,13 @@
 package database_test
 
 import (
-	"github.com/bal16/ariadm/internal/domain/task"
-	"github.com/bal16/ariadm/internal/infra/database"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/bal16/ariadm/internal/domain/task"
+	"github.com/bal16/ariadm/internal/infra/database"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

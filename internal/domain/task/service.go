@@ -2,12 +2,13 @@ package task
 
 import (
 	"errors"
-	"github.com/bal16/ariadm/internal/domain/config"
 	"log"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/bal16/ariadm/internal/domain/config"
 )
 
 var urlPattern = regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].[^\s]*$`)

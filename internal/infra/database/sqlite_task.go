@@ -2,10 +2,11 @@ package database
 
 import (
 	"database/sql"
-	"github.com/bal16/ariadm/internal/domain/task"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/bal16/ariadm/internal/domain/task"
 
 	_ "modernc.org/sqlite"
 )
