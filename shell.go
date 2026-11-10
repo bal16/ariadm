@@ -21,6 +21,8 @@ type shellOptions struct {
 	assets           application.AssetOptions
 	services         []application.Service
 	trayIcon         []byte
+	trayIconDark     []byte
+	trayIconTemplate []byte
 }
 
 // shell owns the Wails application, the main window and the system tray. It

@@ -21,6 +21,12 @@ var assets embed.FS
 //go:embed build/trayicon.png
 var trayIcon []byte
 
+//go:embed build/trayicon-dark.png
+var trayIconDark []byte
+
+//go:embed build/trayicon-template.png
+var trayIconTemplate []byte
+
 const (
 	appName  = "ariadm"
 	rpcPort  = "6800"
@@ -62,6 +68,8 @@ func main() {
 		description:      "Aria2 download manager",
 		singleInstanceID: "ariadm-lock-8f2k",
 		trayIcon:         trayIcon,
+		trayIconDark:     trayIconDark,
+		trayIconTemplate: trayIconTemplate,
 		assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},

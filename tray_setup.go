@@ -1,6 +1,8 @@
 package main
 
 import (
+	"runtime"
+
 	"ariadm/internal/ingress/tray"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -35,7 +37,15 @@ func (s *shell) createTrayWindow() tray.Window {
 // installTray adds the system tray icon and context menu.
 func (s *shell) installTray() {
 	systray := s.app.SystemTray.New()
-	systray.SetIcon(s.opts.trayIcon)
+	if runtime.GOOS == "darwin" {
+		// Template icons adapt automatically to light/dark menu bar.
+		systray.SetTemplateIcon(s.opts.trayIconTemplate)
+	} else {
+		systray.SetIcon(s.opts.trayIcon)
+		if len(s.opts.trayIconDark) > 0 {
+			systray.SetDarkModeIcon(s.opts.trayIconDark)
+		}
+	}
 	systray.SetTooltip(s.opts.name + " - download manager")
 	systray.OnClick(s.trayController.Toggle)
 
