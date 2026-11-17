@@ -1,5 +1,15 @@
 import { createSignal, For, Show } from "solid-js";
-import { Play, Pause, Trash2, File, CircleCheck, Download, CircleAlert, Clock } from "lucide-solid";
+import {
+  Play,
+  Pause,
+  Trash2,
+  File,
+  CircleCheck,
+  Download,
+  CircleAlert,
+  Clock,
+  FolderOpen,
+} from "lucide-solid";
 import type { Task } from "~/../bindings/github.com/bal16/ariadm/internal/domain/task/models";
 import { formatBytes, formatEta } from "~/lib/format";
 
@@ -7,6 +17,7 @@ interface DownloadListProps {
   tasks: Task[];
   onTogglePause: (id: string) => void;
   onDelete: (id: string) => void;
+  onOpenFolder?: (task: Task) => void;
   onNewTask?: () => void;
   searchQuery?: string;
 }
@@ -245,6 +256,14 @@ export function DownloadList(props: DownloadListProps) {
                             )}
                           </button>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => props.onOpenFolder?.(item)}
+                          class="p-1 rounded-sm border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-95"
+                          title="Open folder"
+                        >
+                          <FolderOpen class="h-3 w-3" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => props.onDelete(item.id)}
