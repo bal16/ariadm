@@ -3,29 +3,29 @@
 @custom-variant dark (&:where(.dark, .dark *, [data-kb-theme="dark"], [data-kb-theme="dark"] *));
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+  --background: 166 30% 98%;
+  --foreground: 222 47% 11%;
 
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
+  --muted: 166 20% 94%;
+  --muted-foreground: 200 15% 40%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
+  --popover-foreground: 222 47% 11%;
 
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
+  --border: 166 20% 88%;
+  --input: 166 20% 88%;
 
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
+  --card-foreground: 222 47% 11%;
 
-  --primary: 221 83% 53%;
-  --primary-foreground: 0 0% 98%;
+  --primary: 168 76% 26%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
+  --secondary: 166 20% 94%;
+  --secondary-foreground: 222 47% 11%;
 
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
+  --accent: 166 30% 92%;
+  --accent-foreground: 222 47% 11%;
 
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
@@ -42,36 +42,36 @@
   --error: 0 93% 94%;
   --error-foreground: 0 84% 60%;
 
-  --ring: 240 5.9% 10%;
+  --ring: 168 76% 26%;
 
   --radius: 0.5rem;
 }
 
 .dark,
 [data-kb-theme="dark"] {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+  --background: 168 30% 6%;
+  --foreground: 166 30% 96%;
 
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
+  --muted: 168 20% 14%;
+  --muted-foreground: 166 20% 70%;
 
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 168 20% 16%;
+  --accent-foreground: 166 30% 96%;
 
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
+  --popover: 168 30% 8%;
+  --popover-foreground: 166 30% 96%;
 
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
+  --border: 168 20% 18%;
+  --input: 168 20% 18%;
 
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
+  --card: 168 30% 8%;
+  --card-foreground: 166 30% 96%;
 
-  --primary: 217 91% 60%;
-  --primary-foreground: 240 5.9% 10%;
+  --primary: 168 60% 45%;
+  --primary-foreground: 168 30% 6%;
 
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
+  --secondary: 168 20% 14%;
+  --secondary-foreground: 166 30% 96%;
 
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
@@ -88,7 +88,7 @@
   --error: 0 93% 94%;
   --error-foreground: 0 84% 60%;
 
-  --ring: 240 4.9% 83.9%;
+  --ring: 168 60% 45%;
 
   --radius: 0.5rem;
 }
