@@ -1,5 +1,5 @@
 import { createSignal, onMount, Show } from "solid-js";
-import { Link, X, Download, TriangleAlert } from "lucide-solid";
+import { X, Download, TriangleAlert } from "lucide-solid";
 import { TriggerNewDownload } from "~/../bindings/github.com/bal16/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
 export function AddTaskDialog(props: { onClose: () => void }) {
@@ -15,7 +15,7 @@ export function AddTaskDialog(props: { onClose: () => void }) {
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
     if (!url().trim()) {
-      setErrorMsg("URL string identifier cannot be empty.");
+      setErrorMsg("Please enter a download URL.");
       return;
     }
 
@@ -39,8 +39,8 @@ export function AddTaskDialog(props: { onClose: () => void }) {
         {/* Title Bar */}
         <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-border bg-muted/60 select-none">
           <div class="flex items-center space-x-1.5 text-xs font-medium text-foreground">
-            <Link class="h-3.5 w-3.5 text-primary" />
-            <span>Add New Download Task</span>
+            <Download class="h-3.5 w-3.5 text-primary" />
+            <span>Add Download</span>
           </div>
           <button
             type="button"
@@ -62,14 +62,14 @@ export function AddTaskDialog(props: { onClose: () => void }) {
 
           <div class="space-y-1.5">
             <label class="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Source Resource URL (HTTP / HTTPS)
+              Download URL
             </label>
             <input
               ref={(el) => {
                 urlInput = el;
               }}
               type="text"
-              placeholder="Paste download path link address here..."
+              placeholder="Paste download link here..."
               class="w-full px-3 py-1.5 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
               value={url()}
               onInput={(e) => setUrl(e.currentTarget.value)}
@@ -78,8 +78,7 @@ export function AddTaskDialog(props: { onClose: () => void }) {
           </div>
 
           <div class="text-[10px] text-muted-foreground font-mono bg-muted/30 border border-border p-2 rounded-sm select-none">
-            ℹ️ Links are validated instantly against backend structural regex patterns before
-            routing down to the active aria2 execution daemon stream.
+            The link is validated and sent to the download engine.
           </div>
 
           <div class="flex justify-end space-x-1.5 pt-2 border-t border-border">
@@ -97,7 +96,7 @@ export function AddTaskDialog(props: { onClose: () => void }) {
               class="px-3 py-1 text-xs bg-primary text-primary-foreground font-semibold rounded-sm hover:bg-primary/90 disabled:opacity-50 shadow-xs flex items-center space-x-1 transition-colors"
             >
               <Download class="h-3 w-3" />
-              <span>{isSubmitting() ? "Validating..." : "Launch"}</span>
+              <span>{isSubmitting() ? "Adding..." : "Download"}</span>
             </button>
           </div>
         </form>

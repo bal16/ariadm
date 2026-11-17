@@ -16,7 +16,7 @@ export function Preferences(props: { onClose: () => void }) {
   // Storing component references directly in the structural map array
   const tabs = [
     { id: "download" as TabType, label: "Downloads", icon: Download },
-    { id: "speed" as TabType, label: "Throttling", icon: Zap },
+    { id: "speed" as TabType, label: "Speed", icon: Zap },
     { id: "general" as TabType, label: "General", icon: Settings },
   ];
 
@@ -111,7 +111,7 @@ export function Preferences(props: { onClose: () => void }) {
                     </h3>
                     <div class="space-y-1">
                       <label class="block text-[11px] font-medium text-muted-foreground">
-                        Default Download Directory
+                        Default download folder
                       </label>
                       <input
                         type="text"
@@ -127,7 +127,7 @@ export function Preferences(props: { onClose: () => void }) {
                     </div>
                     <div class="space-y-1">
                       <label class="block text-[11px] font-medium text-muted-foreground">
-                        Max Concurrent Tasks
+                        Max concurrent downloads
                       </label>
                       <input
                         type="number"
@@ -154,16 +154,16 @@ export function Preferences(props: { onClose: () => void }) {
                     </h3>
                     <div class="space-y-1">
                       <label class="block text-[11px] font-medium text-muted-foreground">
-                        Global Speed Limit (Bytes/s, 0 = Max Speed)
+                        Speed limit (KB/s, 0 = unlimited)
                       </label>
                       <input
                         type="number"
                         class="w-36 px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
-                        value={appConfig()?.speed_limit || 0}
+                        value={Math.round((appConfig()?.speed_limit || 0) / 1024)}
                         onInput={(e) =>
                           mutate({
                             ...appConfig()!,
-                            speed_limit: parseInt(e.currentTarget.value) || 0,
+                            speed_limit: (parseInt(e.currentTarget.value) || 0) * 1024,
                           })
                         }
                       />
@@ -190,7 +190,7 @@ export function Preferences(props: { onClose: () => void }) {
                         }
                       />
                       <span class="text-xs font-medium text-foreground">
-                        Minimize to system tray on window close
+                        Minimize to tray when closing the window
                       </span>
                     </label>
                   </div>

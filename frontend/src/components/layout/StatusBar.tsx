@@ -52,7 +52,7 @@ export function StatusBar(props: StatusBarProps) {
         <div class="flex items-center space-x-1.5" title={props.runtimeStatus.engine_message}>
           <span class={`h-2 w-2 rounded-full ${engineDotClass(props.runtimeStatus.engine)}`}></span>
           <span class="text-foreground font-medium">
-            Engine: {engineLabel(props.runtimeStatus.engine)}
+            Download engine: {engineLabel(props.runtimeStatus.engine)}
           </span>
           {engineRunning() && (
             <span class="text-muted-foreground/70">
@@ -62,9 +62,7 @@ export function StatusBar(props: StatusBarProps) {
         </div>
         <span class="text-muted-foreground/40">│</span>
         <span title={props.runtimeStatus.extension_message}>
-          {extensionListening()
-            ? `Extension: Listening :${props.runtimeStatus.extension_port}`
-            : "Extension: Unavailable"}
+          {extensionListening() ? `Extension: Connected` : "Extension: Not connected"}
         </span>
       </div>
       <div class="flex items-center space-x-4">
