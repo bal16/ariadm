@@ -51,7 +51,7 @@ function App() {
   return (
     <div class="w-64 bg-background text-foreground p-4 font-sans">
       <header class="flex items-center justify-between pb-4 border-b border-border">
-        <h1 class="text-lg font-bold">Ariadm</h1>
+        <h1 class="text-lg font-bold">AriaDM</h1>
         <div
           class={`flex items-center text-xs font-semibold px-2 py-1 rounded-full ${
             serviceEnabled()
@@ -71,7 +71,7 @@ function App() {
       <main class="py-4">
         <div class="flex items-center justify-between">
           <label for="service-toggle" class="text-sm">
-            Enable Service
+            Enable browser integration
           </label>
           <button
             id="service-toggle"
@@ -90,7 +90,7 @@ function App() {
       </main>
 
       <footer class="text-center text-xs text-muted-foreground pt-4 border-t border-border">
-        {connected() ? <>Connected · Listening on port {port()}</> : "Ariadm not running"}
+        {connected() ? <>Connected to AriaDM · port {port()}</> : "AriaDM not running"}
       </footer>
     </div>
   );
