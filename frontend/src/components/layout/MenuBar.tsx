@@ -103,9 +103,24 @@ export function MenuBar(props: MenuBarProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <span class="text-muted-foreground/40 px-2 text-[11px] hover:text-foreground cursor-pointer transition-colors">
-        Help
-      </span>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          as="button"
+          class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-hidden"
+        >
+          Help
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="w-56 bg-popover border border-border text-popover-foreground shadow-md">
+          <DropdownMenuItem class="text-xs font-medium flex items-center justify-between">
+            <span>New download</span>
+            <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+N</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem class="text-xs font-medium flex items-center justify-between">
+            <span>Preferences</span>
+            <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+P</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

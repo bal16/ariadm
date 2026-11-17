@@ -16,7 +16,7 @@ export function Preferences(props: { onClose: () => void }) {
   // Storing component references directly in the structural map array
   const tabs = [
     { id: "download" as TabType, label: "Downloads", icon: Download },
-    { id: "speed" as TabType, label: "Throttling", icon: Zap },
+    { id: "speed" as TabType, label: "Speed", icon: Zap },
     { id: "general" as TabType, label: "General", icon: Settings },
   ];
 
@@ -39,8 +39,14 @@ export function Preferences(props: { onClose: () => void }) {
   };
 
   return (
-    <div class="absolute top-16 left-1/2 -translate-x-1/2 z-50 p-1 animate-in fade-in zoom-in-95 duration-150">
-      <div class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-140 h-90 flex flex-col overflow-hidden">
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-150"
+      onClick={props.onClose}
+    >
+      <div
+        class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-140 h-90 flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Window Title Bar */}
         <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-border bg-muted/60 select-none">
           <div class="flex items-center space-x-1.5 text-xs font-medium text-foreground">
@@ -111,7 +117,7 @@ export function Preferences(props: { onClose: () => void }) {
                     </h3>
                     <div class="space-y-1">
                       <label class="block text-[11px] font-medium text-muted-foreground">
-                        Default Download Directory
+                        Default download folder
                       </label>
                       <input
                         type="text"
@@ -127,7 +133,7 @@ export function Preferences(props: { onClose: () => void }) {
                     </div>
                     <div class="space-y-1">
                       <label class="block text-[11px] font-medium text-muted-foreground">
-                        Max Concurrent Tasks
+                        Max concurrent downloads
                       </label>
                       <input
                         type="number"
@@ -154,16 +160,16 @@ export function Preferences(props: { onClose: () => void }) {
                     </h3>
                     <div class="space-y-1">
                       <label class="block text-[11px] font-medium text-muted-foreground">
-                        Global Speed Limit (Bytes/s, 0 = Max Speed)
+                        Speed limit (KB/s, 0 = unlimited)
                       </label>
                       <input
                         type="number"
                         class="w-36 px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
-                        value={appConfig()?.speed_limit || 0}
+                        value={Math.round((appConfig()?.speed_limit || 0) / 1024)}
                         onInput={(e) =>
                           mutate({
                             ...appConfig()!,
-                            speed_limit: parseInt(e.currentTarget.value) || 0,
+                            speed_limit: (parseInt(e.currentTarget.value) || 0) * 1024,
                           })
                         }
                       />
@@ -190,7 +196,7 @@ export function Preferences(props: { onClose: () => void }) {
                         }
                       />
                       <span class="text-xs font-medium text-foreground">
-                        Minimize to system tray on window close
+                        Minimize to tray when closing the window
                       </span>
                     </label>
                   </div>

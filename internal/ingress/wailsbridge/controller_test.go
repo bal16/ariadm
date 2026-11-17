@@ -22,6 +22,11 @@ func (m *MockDownloadEngine) AddURI(url, path, fileName string) (string, error) 
 	args := m.Called(url, path)
 	return args.String(0), args.Error(1)
 }
+
+func (m *MockDownloadEngine) AddURIWithOptions(url, path, fileName string, connections int) (string, error) {
+	args := m.Called(url, path)
+	return args.String(0), args.Error(1)
+}
 func (m *MockDownloadEngine) ResumeURI(url, path, fileName string) (string, error) {
 	args := m.Called(url, path)
 	return args.String(0), args.Error(1)
@@ -102,7 +107,7 @@ func TestWailsBridge_DownloadAndList_Integration(t *testing.T) {
 	targetURL := "https://releases.cachyos.org/desktop/cachyos-desktop-linux.iso"
 	mockedGID := "aria2_generated_gid_12345"
 
-	mockEngine.On("AddURI", targetURL, "/tmp/downloads").Return(mockedGID, nil)
+	mockEngine.On("AddURIWithOptions", targetURL, "/tmp/downloads").Return(mockedGID, nil)
 
 	// SyncAndGetAllTasks will call TellStatus for each stored task
 	mockEngine.On("TellStatus", mockedGID).Return(&task.Aria2Status{
@@ -135,7 +140,7 @@ func TestWailsBridge_TogglePauseState_Integration(t *testing.T) {
 	targetURL := "https://files.minecraft.net/modpack.zip"
 	mockedGID := "aria2_gid_9999"
 
-	mockEngine.On("AddURI", targetURL, "/tmp/downloads").Return(mockedGID, nil)
+	mockEngine.On("AddURIWithOptions", targetURL, "/tmp/downloads").Return(mockedGID, nil)
 	mockEngine.On("Pause", mockedGID).Return(nil)
 	// SyncAndGetAllTasks will call TellStatus once (while the task is still active).
 	// After ToggleTaskPauseState writes "paused" to SQLite, GetTasks skips TellStatus
@@ -164,7 +169,7 @@ func TestWailsBridge_PauseResumeAll_Integration(t *testing.T) {
 	targetURL := "https://files.minecraft.net/modpack.zip"
 	mockedGID := "aria2_gid_bulk_1"
 
-	mockEngine.On("AddURI", targetURL, "/tmp/downloads").Return(mockedGID, nil)
+	mockEngine.On("AddURIWithOptions", targetURL, "/tmp/downloads").Return(mockedGID, nil)
 	mockEngine.On("PauseAll").Return(nil)
 	mockEngine.On("UnpauseAll").Return(nil)
 	mockEngine.On("TellStatus", mockedGID).Return(&task.Aria2Status{

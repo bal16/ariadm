@@ -2,7 +2,10 @@ package wailsbridge
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os/exec"
+	"runtime"
 	"time"
 
 	"github.com/bal16/ariadm/internal/appstate"
@@ -48,6 +51,50 @@ func (b *WailsBridge) SaveApplicationConfig(cfg *config.AppConfig) error {
 // TriggerNewDownload passes a web URL down into the download manager pipelines
 func (b *WailsBridge) TriggerNewDownload(url string) (*task.Task, error) {
 	return b.taskService.DownloadFile(url)
+}
+
+// TriggerNewDownloadWithOptions passes a web URL down into the download manager
+// pipelines with optional destination, file name, and connection count overrides.
+func (b *WailsBridge) TriggerNewDownloadWithOptions(url, downloadPath, fileName string, connections int) (*task.Task, error) {
+	return b.taskService.DownloadFileWithOptions(url, downloadPath, fileName, connections)
+}
+
+// SelectDownloadFolder opens a directory picker and returns the chosen path.
+func (b *WailsBridge) SelectDownloadFolder() (string, error) {
+	app := application.Get()
+	if app == nil {
+		return "", fmt.Errorf("application is not available")
+	}
+
+	path, err := app.Dialog.OpenFile().
+		SetTitle("Select Download Folder").
+		CanChooseDirectories(true).
+		CanChooseFiles(false).
+		PromptForSingleSelection()
+	if err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
+// OpenPath opens a file or folder in the operating system's default handler.
+func (b *WailsBridge) OpenPath(path string) error {
+	if path == "" {
+		return fmt.Errorf("path is empty")
+	}
+
+	if app := application.Get(); app != nil {
+		return app.Browser.OpenFile(path)
+	}
+
+	switch runtime.GOOS {
+	case "darwin":
+		return exec.Command("open", path).Start()
+	case "windows":
+		return exec.Command("explorer", path).Start()
+	default:
+		return exec.Command("xdg-open", path).Start()
+	}
 }
 
 // ToggleTaskPauseState flips the network engine status for a single task queue item

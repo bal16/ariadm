@@ -1,4 +1,5 @@
-import { createSignal, Show } from "solid-js";
+import { createEffect, createSignal, Show } from "solid-js";
+import type { Task } from "~/../bindings/github.com/bal16/ariadm/internal/domain/task/models";
 import { Events } from "@wailsio/runtime";
 import { Preferences } from "~/components/Preferences";
 import { AddTaskDialog } from "~/components/AddTaskDialog";
@@ -12,11 +13,58 @@ import { useAppCloseRequest } from "~/hooks/useAppCloseRequest";
 import { useKeyboardShortcuts } from "~/hooks/useKeyboardShortcuts";
 import { useTaskDeletion } from "~/hooks/useTaskDeletion";
 import { useTaskQueue } from "~/hooks/useTaskQueue";
+import {
+  GetApplicationConfig,
+  OpenPath,
+} from "~/../bindings/github.com/bal16/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
 export default function App() {
   const [showPrefs, setShowPrefs] = createSignal(false);
   const [showAddTask, setShowAddTask] = createSignal(false);
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
+  const [searchQuery, setSearchQuery] = createSignal("");
+
+  const openFolder = async (task: Task) => {
+    let folder = task.download_path;
+    if (!folder) {
+      try {
+        const cfg = await GetApplicationConfig();
+        folder = cfg?.default_download_path ?? "";
+      } catch {
+        folder = "";
+      }
+    }
+    if (folder) void OpenPath(folder);
+  };
+  const notifiedCompletions = new Set<string>();
+
+  createEffect(() => {
+    for (const task of tasks) {
+      if (task.status === "complete" && !notifiedCompletions.has(task.id)) {
+        notifiedCompletions.add(task.id);
+        if (typeof window !== "undefined" && "Notification" in window) {
+          const show = () => {
+            try {
+              new Notification("Download complete", {
+                body: task.file_name || "A download has finished.",
+              });
+            } catch {
+              // Ignore notification errors in restricted webviews.
+            }
+          };
+          if (Notification.permission === "granted") {
+            show();
+          } else if (Notification.permission !== "denied") {
+            Notification.requestPermission()
+              .then((permission) => {
+                if (permission === "granted") show();
+              })
+              .catch(() => {});
+          }
+        }
+      }
+    }
+  });
 
   const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
     useTaskQueue();
@@ -45,10 +93,19 @@ export default function App() {
         onNewTask={() => setShowAddTask(true)}
         onPauseAll={() => void pauseAll()}
         onResumeAll={() => void resumeAll()}
+        searchQuery={searchQuery()}
+        onSearchChange={setSearchQuery}
       />
 
       <div class="flex-1 p-2 bg-background/50 overflow-hidden">
-        <DownloadList tasks={tasks} onTogglePause={togglePause} onDelete={deletion.request} />
+        <DownloadList
+          tasks={tasks}
+          onTogglePause={togglePause}
+          onDelete={deletion.request}
+          onNewTask={() => setShowAddTask(true)}
+          searchQuery={searchQuery()}
+          onOpenFolder={openFolder}
+        />
       </div>
 
       <StatusBar runtimeStatus={runtimeStatus()} downloadSpeed={totalSpeed()} />

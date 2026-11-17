@@ -94,22 +94,31 @@ func (c *Aria2Client) call(method string, params []interface{}) (json.RawMessage
 
 // AddURI sends a new download URL to aria2c and returns the engine's GID string
 func (c *Aria2Client) AddURI(url string, downloadPath string, fileName string) (string, error) {
-	return c.addURI(url, downloadPath, fileName, false)
+	return c.addURI(url, downloadPath, fileName, 0, false)
+}
+
+// AddURIWithOptions sends a new download URL to aria2c with an optional
+// connection count and returns the engine's GID string.
+func (c *Aria2Client) AddURIWithOptions(url string, downloadPath string, fileName string, connections int) (string, error) {
+	return c.addURI(url, downloadPath, fileName, connections, false)
 }
 
 // ResumeURI re-attaches to an existing partial download without letting aria2c
 // auto-rename it to a new file (e.g. "file.1.zip").
 func (c *Aria2Client) ResumeURI(url string, downloadPath string, fileName string) (string, error) {
-	return c.addURI(url, downloadPath, fileName, true)
+	return c.addURI(url, downloadPath, fileName, 0, true)
 }
 
-func (c *Aria2Client) addURI(url string, downloadPath string, fileName string, resume bool) (string, error) {
+func (c *Aria2Client) addURI(url string, downloadPath string, fileName string, connections int, resume bool) (string, error) {
 	// Options specific to this download task
 	options := map[string]string{
 		"dir": downloadPath,
 	}
 	if fileName != "" {
 		options["out"] = fileName
+	}
+	if connections > 0 {
+		options["split"] = strconv.Itoa(connections)
 	}
 	if resume {
 		options["continue"] = "true"

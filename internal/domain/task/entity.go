@@ -25,6 +25,7 @@ type Task struct {
 	GID             string    `json:"gid"` // aria2c unique download ID
 	URL             string    `json:"url"`
 	FileName        string    `json:"file_name"`
+	DownloadPath    string    `json:"download_path"`
 	TotalLength     int64     `json:"total_length"`
 	CompletedLength int64     `json:"completed_length"`
 	Speed           int64     `json:"speed"`

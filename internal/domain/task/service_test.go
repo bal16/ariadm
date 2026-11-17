@@ -33,6 +33,11 @@ func (m *DownloadEngineMock) AddURI(url, path string, fileName string) (string, 
 	args := m.Called(url, path)
 	return args.String(0), args.Error(1)
 }
+
+func (m *DownloadEngineMock) AddURIWithOptions(url, path string, fileName string, connections int) (string, error) {
+	args := m.Called(url, path)
+	return args.String(0), args.Error(1)
+}
 func (m *DownloadEngineMock) ResumeURI(url, path string, fileName string) (string, error) {
 	args := m.Called(url, path)
 	return args.String(0), args.Error(1)
@@ -89,7 +94,7 @@ func TestDownloadFile_Success(t *testing.T) {
 
 	// Mock expectations
 	configRepo.On("Load").Return(mockConfig, nil)
-	engine.On("AddURI", targetURL, "/downloads").Return(expectedGID, nil)
+	engine.On("AddURIWithOptions", targetURL, "/downloads").Return(expectedGID, nil)
 
 	// We check if it attempts to save a task with correct properties to the DB
 	taskRepo.On("Create", mock.MatchedBy(func(t *task.Task) bool {
