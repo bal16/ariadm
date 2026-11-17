@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/bal16/ariadm/internal/domain/task"
@@ -41,6 +42,7 @@ func NewSQLiteTaskRepository(appName string, dbPath string) (*SQLiteTaskReposito
 		gid TEXT NOT NULL UNIQUE,
 		url TEXT NOT NULL,
 		file_name TEXT,
+		download_path TEXT,
 		total_length INTEGER DEFAULT 0,
 		completed_length INTEGER DEFAULT 0,
 		speed INTEGER DEFAULT 0,
@@ -52,28 +54,36 @@ func NewSQLiteTaskRepository(appName string, dbPath string) (*SQLiteTaskReposito
 		return nil, err
 	}
 
+	// Migrate older databases that predate the download_path column.
+	if _, err := db.Exec(`ALTER TABLE tasks ADD COLUMN download_path TEXT`); err != nil {
+		// Ignore "duplicate column name" errors from already-migrated databases.
+		if !strings.Contains(strings.ToLower(err.Error()), "duplicate column name") {
+			return nil, err
+		}
+	}
+
 	return &SQLiteTaskRepository{db: db}, nil
 }
 
 // Create inserts a brand new download tracking entry
 func (r *SQLiteTaskRepository) Create(t *task.Task) error {
-	query := `INSERT INTO tasks (id, gid, url, file_name, total_length, completed_length, speed, status, created_at) 
-	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO tasks (id, gid, url, file_name, download_path, total_length, completed_length, speed, status, created_at)
+	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	_, err := r.db.Exec(query, t.ID, t.GID, t.URL, t.FileName, t.TotalLength, t.CompletedLength, t.Speed, string(t.Status), t.CreatedAt)
+	_, err := r.db.Exec(query, t.ID, t.GID, t.URL, t.FileName, t.DownloadPath, t.TotalLength, t.CompletedLength, t.Speed, string(t.Status), t.CreatedAt)
 	return err
 }
 
 // GetByID fetches a task records using our internal localized ID keys
 func (r *SQLiteTaskRepository) GetByID(id string) (*task.Task, error) {
-	query := `SELECT id, gid, url, file_name, total_length, completed_length, speed, status, created_at FROM tasks WHERE id = ?`
+	query := `SELECT id, gid, url, file_name, download_path, total_length, completed_length, speed, status, created_at FROM tasks WHERE id = ?`
 	row := r.db.QueryRow(query, id)
 
 	var t task.Task
 	var statusStr string
 	var createdAtStr string
 
-	err := row.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+	err := row.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.DownloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
 	if err != nil {
 		return nil, err
 	}
@@ -85,14 +95,14 @@ func (r *SQLiteTaskRepository) GetByID(id string) (*task.Task, error) {
 
 // GetByGID fetches a task records using aria2c's generated unique identifier
 func (r *SQLiteTaskRepository) GetByGID(gid string) (*task.Task, error) {
-	query := `SELECT id, gid, url, file_name, total_length, completed_length, speed, status, created_at FROM tasks WHERE gid = ?`
+	query := `SELECT id, gid, url, file_name, download_path, total_length, completed_length, speed, status, created_at FROM tasks WHERE gid = ?`
 	row := r.db.QueryRow(query, gid)
 
 	var t task.Task
 	var statusStr string
 	var createdAtStr string
 
-	err := row.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+	err := row.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.DownloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
 	if err != nil {
 		return nil, err
 	}
@@ -104,14 +114,14 @@ func (r *SQLiteTaskRepository) GetByGID(gid string) (*task.Task, error) {
 
 // Update rewrites mutable attributes (progress meters, speeds, download status changes)
 func (r *SQLiteTaskRepository) Update(t *task.Task) error {
-	query := `UPDATE tasks SET gid = ?, file_name = ?, total_length = ?, completed_length = ?, speed = ?, status = ? WHERE id = ?`
+	query := `UPDATE tasks SET gid = ?, file_name = ?, download_path = ?, total_length = ?, completed_length = ?, speed = ?, status = ? WHERE id = ?`
 
-	_, err := r.db.Exec(query, t.GID, t.FileName, t.TotalLength, t.CompletedLength, t.Speed, string(t.Status), t.ID)
+	_, err := r.db.Exec(query, t.GID, t.FileName, t.DownloadPath, t.TotalLength, t.CompletedLength, t.Speed, string(t.Status), t.ID)
 	return err
 }
 
 func (r *SQLiteTaskRepository) GetAll() ([]*task.Task, error) {
-	query := `SELECT id, gid, url, file_name, total_length, completed_length, speed, status, created_at FROM tasks ORDER BY created_at DESC`
+	query := `SELECT id, gid, url, file_name, download_path, total_length, completed_length, speed, status, created_at FROM tasks ORDER BY created_at DESC`
 
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -125,7 +135,7 @@ func (r *SQLiteTaskRepository) GetAll() ([]*task.Task, error) {
 		var statusStr string
 		var createdAtStr string
 
-		err := rows.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+		err := rows.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.DownloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
 		if err != nil {
 			return nil, err
 		}

@@ -28,6 +28,12 @@ func NewTaskService(tr TaskRepository, de DownloadEngine, cr config.ConfigReposi
 }
 
 func (s *TaskService) DownloadFile(url string) (*Task, error) {
+	return s.DownloadFileWithOptions(url, "", "", 0)
+}
+
+// DownloadFileWithOptions downloads a URL with optional overrides for the
+// destination folder, output file name, and connection count.
+func (s *TaskService) DownloadFileWithOptions(url, downloadPath, fileName string, connections int) (*Task, error) {
 	if !urlPattern.MatchString(url) {
 		return nil, ErrInvalidURL
 	}
@@ -38,19 +44,25 @@ func (s *TaskService) DownloadFile(url string) (*Task, error) {
 		return nil, errors.New("failed to load configuration details")
 	}
 
+	if downloadPath == "" {
+		downloadPath = cfg.DefaultDownloadPath
+	}
+
 	// 3. Dispatch the URL request to the aria2c engine instance
-	gid, err := s.engine.AddURI(url, cfg.DefaultDownloadPath, "")
+	gid, err := s.engine.AddURIWithOptions(url, downloadPath, fileName, connections)
 	if err != nil {
 		return nil, err
 	}
 
 	// 4. Construct the local tracking model
 	newTask := &Task{
-		ID:        "local_" + gid,
-		GID:       gid,
-		URL:       url,
-		Status:    StatusActive,
-		CreatedAt: time.Now(),
+		ID:           "local_" + gid,
+		GID:          gid,
+		URL:          url,
+		FileName:     fileName,
+		DownloadPath: downloadPath,
+		Status:       StatusActive,
+		CreatedAt:    time.Now(),
 	}
 
 	// 5. Persist the tracking entity to our database layers
