@@ -17,6 +17,7 @@ export default function App() {
   const [showPrefs, setShowPrefs] = createSignal(false);
   const [showAddTask, setShowAddTask] = createSignal(false);
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
+  const [searchQuery, setSearchQuery] = createSignal("");
 
   const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
     useTaskQueue();
@@ -45,10 +46,18 @@ export default function App() {
         onNewTask={() => setShowAddTask(true)}
         onPauseAll={() => void pauseAll()}
         onResumeAll={() => void resumeAll()}
+        searchQuery={searchQuery()}
+        onSearchChange={setSearchQuery}
       />
 
       <div class="flex-1 p-2 bg-background/50 overflow-hidden">
-        <DownloadList tasks={tasks} onTogglePause={togglePause} onDelete={deletion.request} />
+        <DownloadList
+          tasks={tasks}
+          onTogglePause={togglePause}
+          onDelete={deletion.request}
+          onNewTask={() => setShowAddTask(true)}
+          searchQuery={searchQuery()}
+        />
       </div>
 
       <StatusBar runtimeStatus={runtimeStatus()} downloadSpeed={totalSpeed()} />

@@ -20,3 +20,14 @@ export function formatSpeed(bytesPerSecond: number): string {
   if (bytesPerSecond === 0) return "0.00 B/s";
   return scale(bytesPerSecond, RATE_UNITS);
 }
+
+export function formatEta(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "—";
+  const total = Math.round(seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}

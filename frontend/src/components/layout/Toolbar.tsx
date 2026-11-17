@@ -5,6 +5,8 @@ interface ToolbarProps {
   onNewTask: () => void;
   onPauseAll: () => void;
   onResumeAll: () => void;
+  searchQuery?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 export function Toolbar(props: ToolbarProps) {
@@ -49,7 +51,9 @@ export function Toolbar(props: ToolbarProps) {
         <Search class="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/80" />
         <input
           type="text"
-          placeholder="Search tasks..."
+          value={props.searchQuery ?? ""}
+          onInput={(e) => props.onSearchChange?.(e.currentTarget.value)}
+          placeholder="Search downloads..."
           class="pl-7 pr-2 py-1 h-7 text-xs border border-input bg-background text-foreground rounded-sm font-mono w-48 focus:outline-hidden focus:ring-1 focus:ring-ring"
         />
       </div>
