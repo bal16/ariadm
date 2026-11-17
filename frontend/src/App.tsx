@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createEffect, createSignal, Show } from "solid-js";
 import { Events } from "@wailsio/runtime";
 import { Preferences } from "~/components/Preferences";
 import { AddTaskDialog } from "~/components/AddTaskDialog";
@@ -18,6 +18,35 @@ export default function App() {
   const [showAddTask, setShowAddTask] = createSignal(false);
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
   const [searchQuery, setSearchQuery] = createSignal("");
+  const notifiedCompletions = new Set<string>();
+
+  createEffect(() => {
+    for (const task of tasks) {
+      if (task.status === "complete" && !notifiedCompletions.has(task.id)) {
+        notifiedCompletions.add(task.id);
+        if (typeof window !== "undefined" && "Notification" in window) {
+          const show = () => {
+            try {
+              new Notification("Download complete", {
+                body: task.file_name || "A download has finished.",
+              });
+            } catch {
+              // Ignore notification errors in restricted webviews.
+            }
+          };
+          if (Notification.permission === "granted") {
+            show();
+          } else if (Notification.permission !== "denied") {
+            Notification.requestPermission()
+              .then((permission) => {
+                if (permission === "granted") show();
+              })
+              .catch(() => {});
+          }
+        }
+      }
+    }
+  });
 
   const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
     useTaskQueue();
