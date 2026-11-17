@@ -39,8 +39,14 @@ export function Preferences(props: { onClose: () => void }) {
   };
 
   return (
-    <div class="absolute top-16 left-1/2 -translate-x-1/2 z-50 p-1 animate-in fade-in zoom-in-95 duration-150">
-      <div class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-140 h-90 flex flex-col overflow-hidden">
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-150"
+      onClick={props.onClose}
+    >
+      <div
+        class="bg-card text-card-foreground border border-border rounded-md shadow-2xl w-140 h-90 flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Window Title Bar */}
         <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-border bg-muted/60 select-none">
           <div class="flex items-center space-x-1.5 text-xs font-medium text-foreground">
