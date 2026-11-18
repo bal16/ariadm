@@ -4,13 +4,15 @@ import (
 	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
-// installMenu builds the native application menu. The native menu is always
-// enabled so desktop environments that support global menus (for example
-// Noctalia/KDE/GNOME extensions) can access it through DBusMenu.
+// installMenu builds the native application menu. The menu is rendered by Wails
+// as a GtkPopoverMenuBar inside the window; GTK4 does not export it over D-Bus,
+// so a global-menu bar (such as Noctalia's) will not see it.
 func (s *shell) installMenu() {
 	menu := s.app.NewMenu()
+	s.menu = menu
 
 	// macOS uses a global application menu for About, Preferences and Quit.
 	if runtime.GOOS == "darwin" {
@@ -20,21 +22,15 @@ func (s *shell) installMenu() {
 	// File menu
 	fileMenu := menu.AddSubmenu("File")
 	fileMenu.Add("New Download").SetAccelerator("CmdOrCtrl+N").OnClick(func(ctx *application.Context) {
-		if window := s.currentWindow(); window == nil {
-			s.trayController.Show()
-		}
-		s.app.Event.Emit("menu:new-task")
+		go s.showWindowThenEmit("menu:new-task")
 	})
 	fileMenu.Add("Open Download Folder").OnClick(func(ctx *application.Context) {
 		go s.openDownloadFolder()
 	})
 	if runtime.GOOS != "darwin" {
 		fileMenu.AddSeparator()
-		fileMenu.Add("Preferences").SetAccelerator("CmdOrCtrl+P").OnClick(func(ctx *application.Context) {
-			if window := s.currentWindow(); window == nil {
-				s.trayController.Show()
-			}
-			s.app.Event.Emit("menu:preferences")
+		fileMenu.Add("Preferences").SetAccelerator("CmdOrCtrl+,").OnClick(func(ctx *application.Context) {
+			go s.showWindowThenEmit("menu:preferences")
 		})
 		fileMenu.AddSeparator()
 		fileMenu.Add("Quit").SetAccelerator("CmdOrCtrl+Q").OnClick(func(ctx *application.Context) {
@@ -92,17 +88,11 @@ func (s *shell) installMenu() {
 	helpMenu := menu.AddSubmenu("Help")
 	if runtime.GOOS != "darwin" {
 		helpMenu.Add("Keyboard Shortcuts").OnClick(func(ctx *application.Context) {
-			if window := s.currentWindow(); window == nil {
-				s.trayController.Show()
-			}
-			s.app.Event.Emit("menu:shortcuts")
+			go s.showWindowThenEmit("menu:shortcuts")
 		})
 		helpMenu.AddSeparator()
 		helpMenu.Add("About AriaDM").OnClick(func(ctx *application.Context) {
-			if window := s.currentWindow(); window == nil {
-				s.trayController.Show()
-			}
-			s.app.Event.Emit("menu:about")
+			go s.showWindowThenEmit("menu:about")
 		})
 	}
 
@@ -127,8 +117,8 @@ func (s *shell) installMenu() {
 		for key, item := range s.themeRadios {
 			item.SetChecked(key == mode)
 		}
-		if s.viewMenu != nil {
-			s.viewMenu.Update()
+		if s.menu != nil {
+			s.menu.Update()
 		}
 	})
 }
@@ -140,8 +130,8 @@ func (s *shell) SyncTheme(mode string) {
 	for key, item := range s.themeRadios {
 		item.SetChecked(key == mode)
 	}
-	if s.viewMenu != nil {
-		s.viewMenu.Update()
+	if s.menu != nil {
+		s.menu.Update()
 	}
 }
 
@@ -156,6 +146,24 @@ func (s *shell) openDownloadFolder() {
 	if s.bridge != nil {
 		_ = s.bridge.OpenPath(cfg.DefaultDownloadPath)
 	}
+}
+
+// showWindowThenEmit ensures the main window is visible and mounted before
+// emitting a menu event, so the frontend cannot miss it.
+func (s *shell) showWindowThenEmit(eventName string) {
+	if window := s.currentWindow(); window != nil {
+		window.Show()
+		window.Focus()
+		s.app.Event.Emit(eventName)
+		return
+	}
+
+	window := s.newWindow()
+	window.OnWindowEvent(events.Common.WindowShow, func(e *application.WindowEvent) {
+		s.app.Event.Emit(eventName)
+	})
+	window.Show()
+	window.Focus()
 }
 
 func (s *shell) toggleInAppMenu() {
