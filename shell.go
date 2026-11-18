@@ -126,12 +126,13 @@ func (s *shell) Quit() {
 
 func (s *shell) createWindow() *application.WebviewWindow {
 	window := s.app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Name:             "main",
-		Title:            s.opts.name,
-		Width:            1024,
-		Height:           768,
-		BackgroundColour: application.NewRGB(255, 255, 255),
-		URL:              "/",
+		Name:               "main",
+		Title:              s.opts.name,
+		Width:              1024,
+		Height:             768,
+		BackgroundColour:   application.NewRGB(255, 255, 255),
+		URL:                "/",
+		UseApplicationMenu: true,
 	})
 
 	window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
