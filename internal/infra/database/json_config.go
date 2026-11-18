@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/bal16/ariadm/internal/domain/config"
 )
@@ -59,6 +60,15 @@ func (r *JSONConfigRepository) Load() (*config.AppConfig, error) {
 	var cfg config.AppConfig
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, err
+	}
+
+	// Preserve the OS-based default for configs created before this field
+	// existed, while still honoring an explicit false value.
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err == nil {
+		if _, ok := raw["show_in_app_menu"]; !ok {
+			cfg.ShowInAppMenu = (runtime.GOOS == "linux")
+		}
 	}
 
 	return &cfg, nil
