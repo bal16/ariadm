@@ -101,6 +101,7 @@ export default function App() {
   });
 
   onMount(() => {
+    void Events.Emit("theme:changed", themePref());
     Events.On("menu:new-task", () => setShowAddTask(true));
     Events.On("menu:preferences", () => setShowPrefs(true));
     Events.On("menu:shortcuts", () => setShowShortcuts(true));
