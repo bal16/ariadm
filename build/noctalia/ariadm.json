@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "app": "ariadm",
+  "name": "AriaDM",
+  "identifiers": ["ariadm", "org.wails.ariadm", "ariadm.desktop"],
+  "menus": [
+    {
+      "label": "File",
+      "items": [
+        { "label": "New Download…", "shortcut": "<Ctrl>N" },
+        { "separator": true },
+        { "label": "Preferences…", "shortcut": "<Ctrl>P" },
+        { "separator": true },
+        { "label": "Quit", "shortcut": "<Ctrl>Q" }
+      ]
+    }
+  ]
+}
