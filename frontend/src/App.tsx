@@ -37,6 +37,13 @@ export default function App() {
     appConfig()?.show_in_app_menu ??
     (typeof navigator !== "undefined" && /linux/i.test(navigator.userAgent));
 
+  createEffect(() => {
+    const cfg = appConfig();
+    if (cfg?.theme_preference) {
+      setTheme(cfg.theme_preference as "light" | "dark" | "system");
+    }
+  });
+
   const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
     useTaskQueue();
   const deletion = useTaskDeletion(deleteTask);
@@ -109,7 +116,12 @@ export default function App() {
     Events.On("menu:about", () => setShowAbout(true));
     Events.On("theme:set", (e) => {
       const mode = (e?.data as string) ?? "system";
-      if (mode === "light" || mode === "dark" || mode === "system") setTheme(mode);
+      if (mode === "light" || mode === "dark" || mode === "system") {
+        setTheme(mode);
+        const cfg = appConfig();
+        if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: mode });
+        void SyncTheme(mode);
+      }
     });
     Events.On("config:updated", () => void refetchAppConfig());
 
@@ -142,6 +154,8 @@ export default function App() {
           themePref={themePref}
           onSetTheme={(theme) => {
             setTheme(theme);
+            const cfg = appConfig();
+            if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: theme });
             void SyncTheme(theme);
           }}
         />

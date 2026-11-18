@@ -59,20 +59,48 @@ func (s *shell) installMenu() {
 	s.viewMenu = viewMenu
 	s.themeRadios = map[string]*application.MenuItem{}
 
-	lightItem := viewMenu.AddRadio("Light Theme", false)
-	darkItem := viewMenu.AddRadio("Dark Theme", false)
-	systemItem := viewMenu.AddRadio("System Theme", true)
+	mode := "system"
+	if s.configService != nil {
+		if cfg, err := s.configService.GetConfig(); err == nil && cfg != nil && cfg.ThemePreference != "" {
+			mode = cfg.ThemePreference
+		}
+	}
+
+	lightItem := viewMenu.AddCheckbox("Light Theme", mode == "light")
+	darkItem := viewMenu.AddCheckbox("Dark Theme", mode == "dark")
+	systemItem := viewMenu.AddCheckbox("System Theme", mode == "system")
 	s.themeRadios["light"] = lightItem
 	s.themeRadios["dark"] = darkItem
 	s.themeRadios["system"] = systemItem
 
 	lightItem.OnClick(func(ctx *application.Context) {
+		for _, item := range s.themeRadios {
+			item.SetChecked(false)
+		}
+		lightItem.SetChecked(true)
+		if s.menu != nil {
+			s.menu.Update()
+		}
 		s.app.Event.Emit("theme:set", "light")
 	})
 	darkItem.OnClick(func(ctx *application.Context) {
+		for _, item := range s.themeRadios {
+			item.SetChecked(false)
+		}
+		darkItem.SetChecked(true)
+		if s.menu != nil {
+			s.menu.Update()
+		}
 		s.app.Event.Emit("theme:set", "dark")
 	})
 	systemItem.OnClick(func(ctx *application.Context) {
+		for _, item := range s.themeRadios {
+			item.SetChecked(false)
+		}
+		systemItem.SetChecked(true)
+		if s.menu != nil {
+			s.menu.Update()
+		}
 		s.app.Event.Emit("theme:set", "system")
 	})
 

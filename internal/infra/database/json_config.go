@@ -72,6 +72,9 @@ func (r *JSONConfigRepository) Load() (*config.AppConfig, error) {
 		if _, ok := raw["connections_per_download"]; !ok {
 			cfg.ConnectionsPerDownload = 4
 		}
+		if _, ok := raw["theme_preference"]; !ok {
+			cfg.ThemePreference = "system"
+		}
 	}
 
 	return &cfg, nil

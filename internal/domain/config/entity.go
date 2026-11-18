@@ -9,6 +9,7 @@ type AppConfig struct {
 	ConnectionsPerDownload int    `json:"connections_per_download"`
 	MinimizeToTray         bool   `json:"minimize_to_tray"`
 	ShowInAppMenu          bool   `json:"show_in_app_menu"`
+	ThemePreference        string `json:"theme_preference"` // light, dark, system
 }
 
 // NewDefaultConfig returns a fallback configuration if the file doesn't exist
@@ -20,5 +21,6 @@ func NewDefaultConfig() *AppConfig {
 		ConnectionsPerDownload: 4,
 		MinimizeToTray:         true,
 		ShowInAppMenu:          runtime.GOOS == "linux",
+		ThemePreference:        "system",
 	}
 }

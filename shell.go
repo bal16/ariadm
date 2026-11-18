@@ -46,6 +46,7 @@ type shell struct {
 	taskService   *task.TaskService
 	configService *config.ConfigService
 
+	menu        *application.Menu
 	viewMenu    *application.Menu
 	themeRadios map[string]*application.MenuItem
 

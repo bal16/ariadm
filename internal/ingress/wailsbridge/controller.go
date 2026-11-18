@@ -133,7 +133,7 @@ func (b *WailsBridge) SyncTheme(mode string) {
 }
 
 // SetThemeSync registers the callback used to update native menu theme state.
-func (b *WailsBridge) SetThemeSync(fn func(string)) {
+func SetThemeSync(fn func(string)) {
 	themeSyncCallback = fn
 }
 

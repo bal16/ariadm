@@ -107,7 +107,7 @@ func main() {
 		configService: configService,
 	})
 
-	bridge.SetThemeSync(desktop.SyncTheme)
+	wailsbridge.SetThemeSync(desktop.SyncTheme)
 
 	if err := desktop.run(); err != nil {
 		log.Printf("Error: %v", err)
