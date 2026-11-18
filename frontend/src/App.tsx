@@ -1,4 +1,4 @@
-import { createEffect, createSignal, Show } from "solid-js";
+import { createEffect, createResource, createSignal, onCleanup, onMount, Show } from "solid-js";
 import type { Task } from "~/../bindings/github.com/bal16/ariadm/internal/domain/task/models";
 import { Events } from "@wailsio/runtime";
 import { Preferences } from "~/components/Preferences";
@@ -24,6 +24,21 @@ export default function App() {
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
   const [searchQuery, setSearchQuery] = createSignal("");
 
+  const [appConfig, { refetch: refetchAppConfig }] = createResource(GetApplicationConfig);
+  const showInAppMenu = () =>
+    appConfig()?.show_in_app_menu ??
+    (typeof navigator !== "undefined" && /linux/i.test(navigator.userAgent));
+
+  const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
+    useTaskQueue();
+  const deletion = useTaskDeletion(deleteTask);
+
+  useAppCloseRequest(() => setShowQuitDialog(true));
+  useKeyboardShortcuts({
+    onNewTask: () => setShowAddTask((open) => !open),
+    onPreferences: () => setShowPrefs((open) => !open),
+  });
+
   const openFolder = async (task: Task) => {
     let folder = task.download_path;
     if (!folder) {
@@ -36,6 +51,7 @@ export default function App() {
     }
     if (folder) void OpenPath(folder);
   };
+
   const notifiedCompletions = new Set<string>();
 
   createEffect(() => {
@@ -66,14 +82,14 @@ export default function App() {
     }
   });
 
-  const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
-    useTaskQueue();
-  const deletion = useTaskDeletion(deleteTask);
+  onMount(() => {
+    Events.On("menu:new-task", () => setShowAddTask(true));
+    Events.On("menu:preferences", () => setShowPrefs(true));
+    Events.On("config:updated", () => void refetchAppConfig());
 
-  useAppCloseRequest(() => setShowQuitDialog(true));
-  useKeyboardShortcuts({
-    onNewTask: () => setShowAddTask((open) => !open),
-    onPreferences: () => setShowPrefs((open) => !open),
+    onCleanup(() => {
+      Events.Off("menu:new-task", "menu:preferences", "config:updated");
+    });
   });
 
   const quitCompletely = () => {
@@ -87,7 +103,9 @@ export default function App() {
 
   return (
     <div class="h-screen w-screen flex flex-col overflow-hidden relative select-none bg-background text-foreground font-sans antialiased">
-      <MenuBar onNewTask={() => setShowAddTask(true)} onPreferences={() => setShowPrefs(true)} />
+      <Show when={showInAppMenu()}>
+        <MenuBar onNewTask={() => setShowAddTask(true)} onPreferences={() => setShowPrefs(true)} />
+      </Show>
 
       <Toolbar
         onNewTask={() => setShowAddTask(true)}

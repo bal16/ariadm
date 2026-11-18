@@ -199,6 +199,24 @@ export function Preferences(props: { onClose: () => void }) {
                         Minimize to tray when closing the window
                       </span>
                     </label>
+
+                    <label class="flex items-center space-x-2 mt-1 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        class="rounded-sm border-input bg-background text-primary focus:ring-ring h-3.5 w-3.5"
+                        checked={appConfig()?.show_in_app_menu ?? true}
+                        onChange={(e) =>
+                          mutate({
+                            ...appConfig()!,
+                            show_in_app_menu: e.currentTarget.checked,
+                          })
+                        }
+                      />
+                      <span class="text-xs font-medium text-foreground">Show in-app menu bar</span>
+                    </label>
+                    <p class="text-[10px] text-muted-foreground pl-6">
+                      Native menu stays enabled for global menu / DBus.
+                    </p>
                   </div>
                 </Show>
               </div>
