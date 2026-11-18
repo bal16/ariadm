@@ -21,6 +21,8 @@ type WailsBridge struct {
 	configService *config.ConfigService
 	taskService   *task.TaskService
 	hub           *appstate.Hub
+
+	themeSync func(string)
 }
 
 func NewWailsBridge(cs *config.ConfigService, ts *task.TaskService, hub *appstate.Hub) *WailsBridge {
@@ -119,6 +121,18 @@ func (b *WailsBridge) ResumeAllTasks() error {
 // DeleteTask removes a download from aria2c's queue and wipes its record from the local database
 func (b *WailsBridge) DeleteTask(taskID string, deleteFiles bool) error {
 	return b.taskService.DeleteTask(taskID, deleteFiles)
+}
+
+// SyncTheme updates the native menu's selected theme indicator.
+func (b *WailsBridge) SyncTheme(mode string) {
+	if b.themeSync != nil {
+		b.themeSync(mode)
+	}
+}
+
+// SetThemeSync registers the callback used to update native menu theme state.
+func (b *WailsBridge) SetThemeSync(fn func(string)) {
+	b.themeSync = fn
 }
 
 // ServiceStartup is invoked automatically by the Wails runtime engine.

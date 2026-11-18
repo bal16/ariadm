@@ -107,6 +107,8 @@ func main() {
 		configService: configService,
 	})
 
+	bridge.SetThemeSync(desktop.SyncTheme)
+
 	if err := desktop.run(); err != nil {
 		log.Printf("Error: %v", err)
 		os.Exit(1)
