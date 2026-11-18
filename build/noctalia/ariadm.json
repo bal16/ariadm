@@ -13,6 +13,21 @@
         { "separator": true },
         { "label": "Quit", "shortcut": "<Ctrl>Q" }
       ]
+    },
+    {
+      "label": "Downloads",
+      "items": [
+        { "label": "Pause All", "shortcut": "<Ctrl><Shift>P" },
+        { "label": "Resume All", "shortcut": "<Ctrl><Shift>R" }
+      ]
+    },
+    {
+      "label": "View",
+      "items": [
+        { "label": "Light Theme", "shortcut": "<Ctrl><Shift>L" },
+        { "label": "Dark Theme", "shortcut": "<Ctrl><Shift>D" },
+        { "label": "System Theme", "shortcut": "<Ctrl><Shift>S" }
+      ]
     }
   ]
 }

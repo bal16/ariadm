@@ -4,8 +4,12 @@ import { X } from "lucide-solid";
 const SHORTCUTS = [
   { keys: "Ctrl+N", action: "New download" },
   { keys: "Ctrl+P", action: "Preferences" },
+  { keys: "Ctrl+Shift+P", action: "Pause all downloads" },
+  { keys: "Ctrl+Shift+R", action: "Resume all downloads" },
+  { keys: "Ctrl+Shift+L", action: "Light theme" },
+  { keys: "Ctrl+Shift+D", action: "Dark theme" },
+  { keys: "Ctrl+Shift+S", action: "System theme" },
   { keys: "Ctrl+Q", action: "Quit" },
-  { keys: "Space", action: "Pause / resume selected download" },
 ];
 
 export function KeyboardShortcutsDialog(props: { onClose: () => void }) {

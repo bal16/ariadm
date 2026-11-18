@@ -52,6 +52,26 @@ export default function App() {
   useKeyboardShortcuts({
     onNewTask: () => setShowAddTask((open) => !open),
     onPreferences: () => setShowPrefs((open) => !open),
+    onPauseAll: () => void pauseAll(),
+    onResumeAll: () => void resumeAll(),
+    onThemeLight: () => {
+      setTheme("light");
+      const cfg = appConfig();
+      if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: "light" });
+      void SyncTheme("light");
+    },
+    onThemeDark: () => {
+      setTheme("dark");
+      const cfg = appConfig();
+      if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: "dark" });
+      void SyncTheme("dark");
+    },
+    onThemeSystem: () => {
+      setTheme("system");
+      const cfg = appConfig();
+      if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: "system" });
+      void SyncTheme("system");
+    },
   });
 
   const openFolder = async (task: Task) => {

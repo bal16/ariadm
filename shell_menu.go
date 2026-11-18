@@ -43,12 +43,12 @@ func (s *shell) installMenu() {
 
 	// Downloads menu
 	downloadsMenu := menu.AddSubmenu("Downloads")
-	downloadsMenu.Add("Pause All").OnClick(func(ctx *application.Context) {
+	downloadsMenu.Add("Pause All").SetAccelerator("CmdOrCtrl+Shift+P").OnClick(func(ctx *application.Context) {
 		if s.taskService != nil {
 			_ = s.taskService.PauseAllTasks()
 		}
 	})
-	downloadsMenu.Add("Resume All").OnClick(func(ctx *application.Context) {
+	downloadsMenu.Add("Resume All").SetAccelerator("CmdOrCtrl+Shift+R").OnClick(func(ctx *application.Context) {
 		if s.taskService != nil {
 			_ = s.taskService.ResumeAllTasks()
 		}
@@ -66,9 +66,9 @@ func (s *shell) installMenu() {
 		}
 	}
 
-	lightItem := viewMenu.AddCheckbox("Light Theme", mode == "light")
-	darkItem := viewMenu.AddCheckbox("Dark Theme", mode == "dark")
-	systemItem := viewMenu.AddCheckbox("System Theme", mode == "system")
+	lightItem := viewMenu.AddCheckbox("Light Theme", mode == "light").SetAccelerator("CmdOrCtrl+Shift+L")
+	darkItem := viewMenu.AddCheckbox("Dark Theme", mode == "dark").SetAccelerator("CmdOrCtrl+Shift+D")
+	systemItem := viewMenu.AddCheckbox("System Theme", mode == "system").SetAccelerator("CmdOrCtrl+Shift+S")
 	s.themeRadios["light"] = lightItem
 	s.themeRadios["dark"] = darkItem
 	s.themeRadios["system"] = systemItem
