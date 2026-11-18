@@ -1,6 +1,7 @@
 import { createSignal, onMount, Show } from "solid-js";
 import { X, Download, TriangleAlert, FolderOpen } from "lucide-solid";
 import {
+  GetApplicationConfig,
   SelectDownloadFolder,
   TriggerNewDownloadWithOptions,
 } from "~/../bindings/github.com/bal16/ariadm/internal/ingress/wailsbridge/wailsbridge";
@@ -17,6 +18,13 @@ export function AddTaskDialog(props: { onClose: () => void }) {
 
   onMount(() => {
     urlInput?.focus();
+    void GetApplicationConfig()
+      .then((cfg) => {
+        if (cfg && cfg.connections_per_download > 0) {
+          setConnections(cfg.connections_per_download);
+        }
+      })
+      .catch(() => {});
   });
 
   const handleBrowse = async () => {

@@ -62,12 +62,15 @@ func (r *JSONConfigRepository) Load() (*config.AppConfig, error) {
 		return nil, err
 	}
 
-	// Preserve the OS-based default for configs created before this field
-	// existed, while still honoring an explicit false value.
+	// Preserve defaults for configs created before these fields existed,
+	// while still honoring explicit values.
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err == nil {
 		if _, ok := raw["show_in_app_menu"]; !ok {
 			cfg.ShowInAppMenu = (runtime.GOOS == "linux")
+		}
+		if _, ok := raw["connections_per_download"]; !ok {
+			cfg.ConnectionsPerDownload = 4
 		}
 	}
 
