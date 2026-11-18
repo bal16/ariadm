@@ -78,9 +78,11 @@ func (s *shell) installMenu() {
 			item.SetChecked(false)
 		}
 		lightItem.SetChecked(true)
-		if s.menu != nil {
-			s.menu.Update()
-		}
+		application.InvokeSync(func() {
+			if s.menu != nil {
+				s.menu.Update()
+			}
+		})
 		s.app.Event.Emit("theme:set", "light")
 	})
 	darkItem.OnClick(func(ctx *application.Context) {
@@ -88,9 +90,11 @@ func (s *shell) installMenu() {
 			item.SetChecked(false)
 		}
 		darkItem.SetChecked(true)
-		if s.menu != nil {
-			s.menu.Update()
-		}
+		application.InvokeSync(func() {
+			if s.menu != nil {
+				s.menu.Update()
+			}
+		})
 		s.app.Event.Emit("theme:set", "dark")
 	})
 	systemItem.OnClick(func(ctx *application.Context) {
@@ -98,9 +102,11 @@ func (s *shell) installMenu() {
 			item.SetChecked(false)
 		}
 		systemItem.SetChecked(true)
-		if s.menu != nil {
-			s.menu.Update()
-		}
+		application.InvokeSync(func() {
+			if s.menu != nil {
+				s.menu.Update()
+			}
+		})
 		s.app.Event.Emit("theme:set", "system")
 	})
 
@@ -145,9 +151,11 @@ func (s *shell) installMenu() {
 		for key, item := range s.themeRadios {
 			item.SetChecked(key == mode)
 		}
-		if s.menu != nil {
-			s.menu.Update()
-		}
+		application.InvokeSync(func() {
+			if s.menu != nil {
+				s.menu.Update()
+			}
+		})
 	})
 }
 
@@ -158,9 +166,11 @@ func (s *shell) SyncTheme(mode string) {
 	for key, item := range s.themeRadios {
 		item.SetChecked(key == mode)
 	}
-	if s.menu != nil {
-		s.menu.Update()
-	}
+	application.InvokeSync(func() {
+		if s.menu != nil {
+			s.menu.Update()
+		}
+	})
 }
 
 func (s *shell) openDownloadFolder() {
