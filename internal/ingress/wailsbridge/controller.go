@@ -21,9 +21,11 @@ type WailsBridge struct {
 	configService *config.ConfigService
 	taskService   *task.TaskService
 	hub           *appstate.Hub
-
-	themeSync func(string)
 }
+
+// themeSyncCallback is stored outside the struct so the Wails binding generator
+// does not try to serialize a function-typed field.
+var themeSyncCallback func(string)
 
 func NewWailsBridge(cs *config.ConfigService, ts *task.TaskService, hub *appstate.Hub) *WailsBridge {
 	return &WailsBridge{
@@ -125,14 +127,14 @@ func (b *WailsBridge) DeleteTask(taskID string, deleteFiles bool) error {
 
 // SyncTheme updates the native menu's selected theme indicator.
 func (b *WailsBridge) SyncTheme(mode string) {
-	if b.themeSync != nil {
-		b.themeSync(mode)
+	if themeSyncCallback != nil {
+		themeSyncCallback(mode)
 	}
 }
 
 // SetThemeSync registers the callback used to update native menu theme state.
 func (b *WailsBridge) SetThemeSync(fn func(string)) {
-	b.themeSync = fn
+	themeSyncCallback = fn
 }
 
 // ServiceStartup is invoked automatically by the Wails runtime engine.
