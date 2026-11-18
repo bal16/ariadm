@@ -102,6 +102,9 @@ func main() {
 			application.NewService(NewApp(daemonManager, rpcClient, hub)),
 			application.NewService(bridge),
 		},
+		bridge:        bridge,
+		taskService:   taskService,
+		configService: configService,
 	})
 
 	if err := desktop.run(); err != nil {
