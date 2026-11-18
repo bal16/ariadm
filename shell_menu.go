@@ -71,7 +71,20 @@ func (s *shell) installMenu() {
 
 	// Keep native radio selection in sync when the theme changes from the UI.
 	s.app.Event.On("theme:changed", func(e *application.CustomEvent) {
-		mode, _ := e.Data.(string)
+		mode := ""
+		switch v := e.Data.(type) {
+		case string:
+			mode = v
+		case []interface{}:
+			if len(v) > 0 {
+				if str, ok := v[0].(string); ok {
+					mode = str
+				}
+			}
+		}
+		if mode == "" {
+			mode = "system"
+		}
 		for key, item := range s.themeRadios {
 			item.SetChecked(key == mode)
 		}
