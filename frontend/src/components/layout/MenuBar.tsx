@@ -19,7 +19,6 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { useTheme } from "~/hooks/useTheme";
 
 interface MenuBarProps {
   onNewTask: () => void;
@@ -28,10 +27,15 @@ interface MenuBarProps {
   onPauseAll: () => void;
   onResumeAll: () => void;
   onToggleInAppMenu: () => void;
+  onShowShortcuts: () => void;
+  onShowAbout: () => void;
+  themePref: () => "light" | "dark" | "system";
+  onSetTheme: (theme: "light" | "dark" | "system") => void;
 }
 
 export function MenuBar(props: MenuBarProps) {
-  const { themePref, setTheme } = useTheme();
+  const themePref = props.themePref;
+  const setTheme = props.onSetTheme;
 
   return (
     <div class="flex items-center px-2 py-0.5 bg-muted/40 border-b border-border text-xs space-x-1 z-40">
@@ -156,17 +160,17 @@ export function MenuBar(props: MenuBarProps) {
           Help
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-52 bg-popover border border-border text-popover-foreground shadow-md">
-          <DropdownMenuItem class="text-xs font-medium flex items-center justify-between">
-            <span>New Download</span>
-            <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+N</DropdownMenuShortcut>
+          <DropdownMenuItem
+            onClick={props.onShowShortcuts}
+            class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+          >
+            <span class="flex-1">Keyboard Shortcuts</span>
           </DropdownMenuItem>
-          <DropdownMenuItem class="text-xs font-medium flex items-center justify-between">
-            <span>Preferences</span>
-            <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+P</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem class="text-xs font-medium">
-            <span>About AriaDM</span>
+          <DropdownMenuItem
+            onClick={props.onShowAbout}
+            class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+          >
+            <span class="flex-1">About AriaDM</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -44,6 +44,16 @@ func (s *shell) installMenu() {
 	})
 
 	viewMenu := menu.AddSubmenu("View")
+	viewMenu.Add("Light Theme").OnClick(func(ctx *application.Context) {
+		s.app.Event.Emit("theme:set", "light")
+	})
+	viewMenu.Add("Dark Theme").OnClick(func(ctx *application.Context) {
+		s.app.Event.Emit("theme:set", "dark")
+	})
+	viewMenu.Add("System Theme").OnClick(func(ctx *application.Context) {
+		s.app.Event.Emit("theme:set", "system")
+	})
+	viewMenu.AddSeparator()
 	viewMenu.Add("Toggle In-App Menu").OnClick(func(ctx *application.Context) {
 		go s.toggleInAppMenu()
 	})

@@ -3,6 +3,8 @@ import type { Task } from "~/../bindings/github.com/bal16/ariadm/internal/domain
 import { Events } from "@wailsio/runtime";
 import { Preferences } from "~/components/Preferences";
 import { AddTaskDialog } from "~/components/AddTaskDialog";
+import { AboutDialog } from "~/components/AboutDialog";
+import { KeyboardShortcutsDialog } from "~/components/KeyboardShortcutsDialog";
 import { DownloadList } from "~/components/DownloadList";
 import { DeleteConfirmDialog } from "~/components/DeleteConfirmDialog";
 import { QuitConfirmDialog } from "~/components/QuitConfirmDialog";
@@ -13,6 +15,7 @@ import { useAppCloseRequest } from "~/hooks/useAppCloseRequest";
 import { useKeyboardShortcuts } from "~/hooks/useKeyboardShortcuts";
 import { useTaskDeletion } from "~/hooks/useTaskDeletion";
 import { useTaskQueue } from "~/hooks/useTaskQueue";
+import { useTheme } from "~/hooks/useTheme";
 import {
   GetApplicationConfig,
   OpenPath,
@@ -23,7 +26,10 @@ export default function App() {
   const [showPrefs, setShowPrefs] = createSignal(false);
   const [showAddTask, setShowAddTask] = createSignal(false);
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
+  const [showShortcuts, setShowShortcuts] = createSignal(false);
+  const [showAbout, setShowAbout] = createSignal(false);
   const [searchQuery, setSearchQuery] = createSignal("");
+  const { themePref, setTheme } = useTheme();
 
   const [appConfig, { refetch: refetchAppConfig }] = createResource(GetApplicationConfig);
   const showInAppMenu = () =>
@@ -97,6 +103,12 @@ export default function App() {
   onMount(() => {
     Events.On("menu:new-task", () => setShowAddTask(true));
     Events.On("menu:preferences", () => setShowPrefs(true));
+    Events.On("menu:shortcuts", () => setShowShortcuts(true));
+    Events.On("menu:about", () => setShowAbout(true));
+    Events.On("theme:set", (e) => {
+      const mode = (e?.data as string) ?? "system";
+      if (mode === "light" || mode === "dark" || mode === "system") setTheme(mode);
+    });
     Events.On("config:updated", () => void refetchAppConfig());
 
     onCleanup(() => {
@@ -123,6 +135,10 @@ export default function App() {
           onPauseAll={() => void pauseAll()}
           onResumeAll={() => void resumeAll()}
           onToggleInAppMenu={() => void toggleInAppMenu()}
+          onShowShortcuts={() => setShowShortcuts(true)}
+          onShowAbout={() => setShowAbout(true)}
+          themePref={themePref}
+          onSetTheme={setTheme}
         />
       </Show>
 
@@ -153,6 +169,14 @@ export default function App() {
 
       <Show when={showAddTask()}>
         <AddTaskDialog onClose={() => setShowAddTask(false)} />
+      </Show>
+
+      <Show when={showShortcuts()}>
+        <KeyboardShortcutsDialog onClose={() => setShowShortcuts(false)} />
+      </Show>
+
+      <Show when={showAbout()}>
+        <AboutDialog onClose={() => setShowAbout(false)} />
       </Show>
 
       <Show when={deletion.taskToDelete() !== null}>
