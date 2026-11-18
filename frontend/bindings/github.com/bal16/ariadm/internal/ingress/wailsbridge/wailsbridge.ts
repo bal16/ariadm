@@ -3,7 +3,7 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Create } from "@wailsio/runtime";
+import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -26,9 +26,7 @@ export function DeleteTask(taskID: string, deleteFiles: boolean): $CancellablePr
  * GetApplicationConfig fetches the current local settings values
  */
 export function GetApplicationConfig(): $CancellablePromise<config$0.AppConfig | null> {
-    return $Call.ByID(3237254812).then(($result: any) => {
-        return $$createType1($result);
-    });
+    return $Call.ByID(3237254812);
 }
 
 /**
@@ -37,18 +35,14 @@ export function GetApplicationConfig(): $CancellablePromise<config$0.AppConfig |
  * published before that point are lost.
  */
 export function GetRuntimeStatus(): $CancellablePromise<appstate$0.Status> {
-    return $Call.ByID(2326573250).then(($result: any) => {
-        return $$createType2($result);
-    });
+    return $Call.ByID(2326573250);
 }
 
 /**
  * GetTasks queries, enriches with live aria2c data, and returns all task records
  */
-export function GetTasks(): $CancellablePromise<(task$0.Task | null)[]> {
-    return $Call.ByID(739627038).then(($result: any) => {
-        return $$createType5($result);
-    });
+export function GetTasks(): $CancellablePromise<(task$0.Task | null)[] | null> {
+    return $Call.ByID(739627038);
 }
 
 /**
@@ -87,6 +81,13 @@ export function SelectDownloadFolder(): $CancellablePromise<string> {
 }
 
 /**
+ * SyncTheme updates the native menu's selected theme indicator.
+ */
+export function SyncTheme(mode: string): $CancellablePromise<void> {
+    return $Call.ByID(2151615572, mode);
+}
+
+/**
  * ToggleTaskPauseState flips the network engine status for a single task queue item
  */
 export function ToggleTaskPauseState(taskID: string): $CancellablePromise<void> {
@@ -97,9 +98,7 @@ export function ToggleTaskPauseState(taskID: string): $CancellablePromise<void> 
  * TriggerNewDownload passes a web URL down into the download manager pipelines
  */
 export function TriggerNewDownload(url: string): $CancellablePromise<task$0.Task | null> {
-    return $Call.ByID(1244149018, url).then(($result: any) => {
-        return $$createType4($result);
-    });
+    return $Call.ByID(1244149018, url);
 }
 
 /**
@@ -107,15 +106,5 @@ export function TriggerNewDownload(url: string): $CancellablePromise<task$0.Task
  * pipelines with optional destination, file name, and connection count overrides.
  */
 export function TriggerNewDownloadWithOptions(url: string, downloadPath: string, fileName: string, connections: number): $CancellablePromise<task$0.Task | null> {
-    return $Call.ByID(1039318600, url, downloadPath, fileName, connections).then(($result: any) => {
-        return $$createType4($result);
-    });
+    return $Call.ByID(1039318600, url, downloadPath, fileName, connections);
 }
-
-// Private type creation functions
-const $$createType0 = config$0.AppConfig.createFrom;
-const $$createType1 = $Create.Nullable($$createType0);
-const $$createType2 = appstate$0.Status.createFrom;
-const $$createType3 = task$0.Task.createFrom;
-const $$createType4 = $Create.Nullable($$createType3);
-const $$createType5 = $Create.Array($$createType4);

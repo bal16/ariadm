@@ -1,9 +1,11 @@
 import { createResource, createSignal, Show, For } from "solid-js";
 import {
   GetApplicationConfig,
+  OpenPath,
   SaveApplicationConfig,
+  SelectDownloadFolder,
 } from "~/../bindings/github.com/bal16/ariadm/internal/ingress/wailsbridge/wailsbridge";
-import { Download, Zap, Settings, X, Save } from "lucide-solid";
+import { Download, FolderOpen, Zap, Settings, X, Save } from "lucide-solid";
 
 type TabType = "download" | "speed" | "general";
 
@@ -11,7 +13,28 @@ export function Preferences(props: { onClose: () => void }) {
   const [activeTab, setActiveTab] = createSignal<TabType>("download");
   const [appConfig, { mutate }] = createResource(GetApplicationConfig);
   const [isSaving, setIsSaving] = createSignal(false);
+  const [isBrowsing, setIsBrowsing] = createSignal(false);
   const [errorMsg, setErrorMsg] = createSignal("");
+
+  const handleBrowseFolder = async () => {
+    setIsBrowsing(true);
+    setErrorMsg("");
+    try {
+      const path = await SelectDownloadFolder();
+      if (path) {
+        mutate({ ...appConfig()!, default_download_path: path });
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsBrowsing(false);
+    }
+  };
+
+  const handleOpenFolder = () => {
+    const path = appConfig()?.default_download_path;
+    if (path) void OpenPath(path);
+  };
 
   // Storing component references directly in the structural map array
   const tabs = [
@@ -119,14 +142,51 @@ export function Preferences(props: { onClose: () => void }) {
                       <label class="block text-[11px] font-medium text-muted-foreground">
                         Default download folder
                       </label>
+                      <div class="flex space-x-2">
+                        <input
+                          type="text"
+                          class="flex-1 px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
+                          value={appConfig()?.default_download_path || ""}
+                          onInput={(e) =>
+                            mutate({
+                              ...appConfig()!,
+                              default_download_path: e.currentTarget.value,
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleBrowseFolder()}
+                          disabled={isBrowsing()}
+                          class="px-2.5 py-1 text-xs border border-input bg-muted/40 text-foreground rounded-sm hover:bg-muted disabled:opacity-50 flex items-center space-x-1"
+                        >
+                          <FolderOpen class="h-3.5 w-3.5" />
+                          <span>{isBrowsing() ? "..." : "Browse"}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleOpenFolder}
+                          class="px-2.5 py-1 text-xs border border-input bg-muted/40 text-foreground rounded-sm hover:bg-muted flex items-center space-x-1"
+                        >
+                          <FolderOpen class="h-3.5 w-3.5" />
+                          <span>Open</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="space-y-1">
+                      <label class="block text-[11px] font-medium text-muted-foreground">
+                        Connections per download
+                      </label>
                       <input
-                        type="text"
-                        class="w-full px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
-                        value={appConfig()?.default_download_path || ""}
+                        type="number"
+                        min="1"
+                        max="16"
+                        class="w-20 px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
+                        value={appConfig()?.connections_per_download || 4}
                         onInput={(e) =>
                           mutate({
                             ...appConfig()!,
-                            default_download_path: e.currentTarget.value,
+                            connections_per_download: parseInt(e.currentTarget.value) || 1,
                           })
                         }
                       />
@@ -158,13 +218,29 @@ export function Preferences(props: { onClose: () => void }) {
                     <h3 class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-1">
                       Bandwidth Allocation
                     </h3>
+                    <label class="flex items-center space-x-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        class="rounded-sm border-input bg-background text-primary focus:ring-ring h-3.5 w-3.5"
+                        checked={(appConfig()?.speed_limit || 0) === 0}
+                        onChange={(e) =>
+                          mutate({
+                            ...appConfig()!,
+                            speed_limit: e.currentTarget.checked ? 0 : 1024 * 1024,
+                          })
+                        }
+                      />
+                      <span class="text-xs font-medium text-foreground">Unlimited speed</span>
+                    </label>
                     <div class="space-y-1">
                       <label class="block text-[11px] font-medium text-muted-foreground">
-                        Speed limit (KB/s, 0 = unlimited)
+                        Speed limit (KB/s)
                       </label>
                       <input
                         type="number"
-                        class="w-36 px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring"
+                        min="0"
+                        disabled={(appConfig()?.speed_limit || 0) === 0}
+                        class="w-36 px-2 py-1 text-xs border border-input bg-background text-foreground rounded-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-ring disabled:opacity-50"
                         value={Math.round((appConfig()?.speed_limit || 0) / 1024)}
                         onInput={(e) =>
                           mutate({
@@ -199,6 +275,24 @@ export function Preferences(props: { onClose: () => void }) {
                         Minimize to tray when closing the window
                       </span>
                     </label>
+
+                    <label class="flex items-center space-x-2 mt-1 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        class="rounded-sm border-input bg-background text-primary focus:ring-ring h-3.5 w-3.5"
+                        checked={appConfig()?.show_in_app_menu ?? true}
+                        onChange={(e) =>
+                          mutate({
+                            ...appConfig()!,
+                            show_in_app_menu: e.currentTarget.checked,
+                          })
+                        }
+                      />
+                      <span class="text-xs font-medium text-foreground">Show in-app menu bar</span>
+                    </label>
+                    <p class="text-[10px] text-muted-foreground pl-6">
+                      Native menu stays enabled for global menu / DBus.
+                    </p>
                   </div>
                 </Show>
               </div>

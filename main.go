@@ -102,7 +102,12 @@ func main() {
 			application.NewService(NewApp(daemonManager, rpcClient, hub)),
 			application.NewService(bridge),
 		},
+		bridge:        bridge,
+		taskService:   taskService,
+		configService: configService,
 	})
+
+	wailsbridge.SetThemeSync(desktop.SyncTheme)
 
 	if err := desktop.run(); err != nil {
 		log.Printf("Error: %v", err)

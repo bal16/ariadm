@@ -89,3 +89,27 @@ clean:
 	rm -rf build/bin/*
 	rm -rf $(FRONTEND_DIR)/dist
 	rm -rf web-extension/dist
+## install-noctalia-menu: Install the Noctalia global-menu shortcut mapping
+install-noctalia-menu:
+	@echo "==> Installing Noctalia global-menu shortcut mapping..."
+	@mkdir -p $(HOME)/.config/noctalia/global-menu/shortcuts/apps
+	@cp build/noctalia/ariadm.json $(HOME)/.config/noctalia/global-menu/shortcuts/apps/ariadm.json
+	@echo "Installed to $(HOME)/.config/noctalia/global-menu/shortcuts/apps/ariadm.json"
+	@if command -v noctalia >/dev/null 2>&1; then \
+		noctalia msg plugin amancode22/global-menu:service all reload-shortcuts || true; \
+		echo "==> Requested Noctalia shortcut reload"; \
+	else \
+		echo "==> noctalia CLI not found; reload shortcuts manually"; \
+	fi
+
+## uninstall-noctalia-menu: Remove the Noctalia global-menu shortcut mapping
+uninstall-noctalia-menu:
+	@echo "==> Removing Noctalia global-menu shortcut mapping..."
+	@rm -f $(HOME)/.config/noctalia/global-menu/shortcuts/apps/ariadm.json
+	@echo "Removed $(HOME)/.config/noctalia/global-menu/shortcuts/apps/ariadm.json"
+	@if command -v noctalia >/dev/null 2>&1; then \
+		noctalia msg plugin amancode22/global-menu:service all reload-shortcuts || true; \
+		echo "==> Requested Noctalia shortcut reload"; \
+	else \
+		echo "==> noctalia CLI not found; reload shortcuts manually"; \
+	fi

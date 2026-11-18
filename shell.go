@@ -7,7 +7,10 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/bal16/ariadm/internal/domain/config"
+	"github.com/bal16/ariadm/internal/domain/task"
 	"github.com/bal16/ariadm/internal/ingress/tray"
+	"github.com/bal16/ariadm/internal/ingress/wailsbridge"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -23,6 +26,10 @@ type shellOptions struct {
 	trayIcon         []byte
 	trayIconDark     []byte
 	trayIconTemplate []byte
+
+	bridge        *wailsbridge.WailsBridge
+	taskService   *task.TaskService
+	configService *config.ConfigService
 }
 
 // shell owns the Wails application, the main window and the system tray. It
@@ -35,13 +42,26 @@ type shell struct {
 	window         *application.WebviewWindow
 	trayController *tray.Controller
 
+	bridge        *wailsbridge.WailsBridge
+	taskService   *task.TaskService
+	configService *config.ConfigService
+
+	menu        *application.Menu
+	viewMenu    *application.Menu
+	themeRadios map[string]*application.MenuItem
+
 	windowMu          sync.Mutex
 	actuallyQuit      atomic.Bool
 	backgroundClosing atomic.Bool
 }
 
 func newShell(opts shellOptions) *shell {
-	return &shell{opts: opts}
+	return &shell{
+		opts:          opts,
+		bridge:        opts.bridge,
+		taskService:   opts.taskService,
+		configService: opts.configService,
+	}
 }
 
 // run builds the Wails application, installs the tray and blocks until the
@@ -90,6 +110,7 @@ func (s *shell) run() error {
 	})
 
 	s.installTray()
+	s.installMenu()
 	s.newWindow()
 	s.handleShutdownSignals()
 
@@ -106,12 +127,13 @@ func (s *shell) Quit() {
 
 func (s *shell) createWindow() *application.WebviewWindow {
 	window := s.app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Name:             "main",
-		Title:            s.opts.name,
-		Width:            1024,
-		Height:           768,
-		BackgroundColour: application.NewRGB(255, 255, 255),
-		URL:              "/",
+		Name:               "main",
+		Title:              s.opts.name,
+		Width:              1024,
+		Height:             768,
+		BackgroundColour:   application.NewRGB(255, 255, 255),
+		URL:                "/",
+		UseApplicationMenu: true,
 	})
 
 	window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {

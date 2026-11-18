@@ -3,6 +3,9 @@
 
 export {
     EngineState,
-    ExtensionState,
+    ExtensionState
+} from "./models.js";
+
+export type {
     Status
 } from "./models.js";

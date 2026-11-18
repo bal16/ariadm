@@ -1,8 +1,10 @@
-import { createEffect, createSignal, Show } from "solid-js";
+import { createEffect, createResource, createSignal, onCleanup, onMount, Show } from "solid-js";
 import type { Task } from "~/../bindings/github.com/bal16/ariadm/internal/domain/task/models";
 import { Events } from "@wailsio/runtime";
 import { Preferences } from "~/components/Preferences";
 import { AddTaskDialog } from "~/components/AddTaskDialog";
+import { AboutDialog } from "~/components/AboutDialog";
+import { KeyboardShortcutsDialog } from "~/components/KeyboardShortcutsDialog";
 import { DownloadList } from "~/components/DownloadList";
 import { DeleteConfirmDialog } from "~/components/DeleteConfirmDialog";
 import { QuitConfirmDialog } from "~/components/QuitConfirmDialog";
@@ -13,16 +15,64 @@ import { useAppCloseRequest } from "~/hooks/useAppCloseRequest";
 import { useKeyboardShortcuts } from "~/hooks/useKeyboardShortcuts";
 import { useTaskDeletion } from "~/hooks/useTaskDeletion";
 import { useTaskQueue } from "~/hooks/useTaskQueue";
+import { useTheme } from "~/hooks/useTheme";
 import {
   GetApplicationConfig,
   OpenPath,
+  SaveApplicationConfig,
+  SyncTheme,
 } from "~/../bindings/github.com/bal16/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
 export default function App() {
   const [showPrefs, setShowPrefs] = createSignal(false);
   const [showAddTask, setShowAddTask] = createSignal(false);
   const [showQuitDialog, setShowQuitDialog] = createSignal(false);
+  const [showShortcuts, setShowShortcuts] = createSignal(false);
+  const [showAbout, setShowAbout] = createSignal(false);
   const [searchQuery, setSearchQuery] = createSignal("");
+  const { themePref, setTheme } = useTheme();
+
+  const [appConfig, { refetch: refetchAppConfig }] = createResource(GetApplicationConfig);
+  const showInAppMenu = () =>
+    appConfig()?.show_in_app_menu ??
+    (typeof navigator !== "undefined" && /linux/i.test(navigator.userAgent));
+
+  createEffect(() => {
+    const cfg = appConfig();
+    if (cfg?.theme_preference) {
+      setTheme(cfg.theme_preference as "light" | "dark" | "system");
+    }
+  });
+
+  const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
+    useTaskQueue();
+  const deletion = useTaskDeletion(deleteTask);
+
+  useAppCloseRequest(() => setShowQuitDialog(true));
+  useKeyboardShortcuts({
+    onNewTask: () => setShowAddTask((open) => !open),
+    onPreferences: () => setShowPrefs((open) => !open),
+    onPauseAll: () => void pauseAll(),
+    onResumeAll: () => void resumeAll(),
+    onThemeLight: () => {
+      setTheme("light");
+      const cfg = appConfig();
+      if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: "light" });
+      void SyncTheme("light");
+    },
+    onThemeDark: () => {
+      setTheme("dark");
+      const cfg = appConfig();
+      if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: "dark" });
+      void SyncTheme("dark");
+    },
+    onThemeSystem: () => {
+      setTheme("system");
+      const cfg = appConfig();
+      if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: "system" });
+      void SyncTheme("system");
+    },
+  });
 
   const openFolder = async (task: Task) => {
     let folder = task.download_path;
@@ -36,6 +86,18 @@ export default function App() {
     }
     if (folder) void OpenPath(folder);
   };
+
+  const toggleInAppMenu = async () => {
+    const cfg = appConfig();
+    if (!cfg) return;
+    try {
+      await SaveApplicationConfig({ ...cfg, show_in_app_menu: !cfg.show_in_app_menu });
+      void refetchAppConfig();
+    } catch {
+      // ignore
+    }
+  };
+
   const notifiedCompletions = new Set<string>();
 
   createEffect(() => {
@@ -66,14 +128,26 @@ export default function App() {
     }
   });
 
-  const { tasks, runtimeStatus, totalSpeed, togglePause, pauseAll, resumeAll, deleteTask } =
-    useTaskQueue();
-  const deletion = useTaskDeletion(deleteTask);
+  onMount(() => {
+    void SyncTheme(themePref());
+    Events.On("menu:new-task", () => setShowAddTask(true));
+    Events.On("menu:preferences", () => setShowPrefs(true));
+    Events.On("menu:shortcuts", () => setShowShortcuts(true));
+    Events.On("menu:about", () => setShowAbout(true));
+    Events.On("theme:set", (e) => {
+      const mode = (e?.data as string) ?? "system";
+      if (mode === "light" || mode === "dark" || mode === "system") {
+        setTheme(mode);
+        const cfg = appConfig();
+        if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: mode });
+        void SyncTheme(mode);
+      }
+    });
+    Events.On("config:updated", () => void refetchAppConfig());
 
-  useAppCloseRequest(() => setShowQuitDialog(true));
-  useKeyboardShortcuts({
-    onNewTask: () => setShowAddTask((open) => !open),
-    onPreferences: () => setShowPrefs((open) => !open),
+    onCleanup(() => {
+      Events.Off("menu:new-task", "menu:preferences", "config:updated");
+    });
   });
 
   const quitCompletely = () => {
@@ -87,7 +161,25 @@ export default function App() {
 
   return (
     <div class="h-screen w-screen flex flex-col overflow-hidden relative select-none bg-background text-foreground font-sans antialiased">
-      <MenuBar onNewTask={() => setShowAddTask(true)} onPreferences={() => setShowPrefs(true)} />
+      <Show when={showInAppMenu()}>
+        <MenuBar
+          onNewTask={() => setShowAddTask(true)}
+          onOpenFolder={() => void openFolder({ download_path: "" } as Task)}
+          onPreferences={() => setShowPrefs(true)}
+          onPauseAll={() => void pauseAll()}
+          onResumeAll={() => void resumeAll()}
+          onToggleInAppMenu={() => void toggleInAppMenu()}
+          onShowShortcuts={() => setShowShortcuts(true)}
+          onShowAbout={() => setShowAbout(true)}
+          themePref={themePref}
+          onSetTheme={(theme) => {
+            setTheme(theme);
+            const cfg = appConfig();
+            if (cfg) void SaveApplicationConfig({ ...cfg, theme_preference: theme });
+            void SyncTheme(theme);
+          }}
+        />
+      </Show>
 
       <Toolbar
         onNewTask={() => setShowAddTask(true)}
@@ -116,6 +208,14 @@ export default function App() {
 
       <Show when={showAddTask()}>
         <AddTaskDialog onClose={() => setShowAddTask(false)} />
+      </Show>
+
+      <Show when={showShortcuts()}>
+        <KeyboardShortcutsDialog onClose={() => setShowShortcuts(false)} />
+      </Show>
+
+      <Show when={showAbout()}>
+        <AboutDialog onClose={() => setShowAbout(false)} />
       </Show>
 
       <Show when={deletion.taskToDelete() !== null}>
