@@ -87,6 +87,20 @@ export function SelectDownloadFolder(): $CancellablePromise<string> {
 }
 
 /**
+ * SetThemeSync registers the callback used to update native menu theme state.
+ */
+export function SetThemeSync(fn: any): $CancellablePromise<void> {
+    return $Call.ByID(2988934362, fn);
+}
+
+/**
+ * SyncTheme updates the native menu's selected theme indicator.
+ */
+export function SyncTheme(mode: string): $CancellablePromise<void> {
+    return $Call.ByID(2151615572, mode);
+}
+
+/**
  * ToggleTaskPauseState flips the network engine status for a single task queue item
  */
 export function ToggleTaskPauseState(taskID: string): $CancellablePromise<void> {

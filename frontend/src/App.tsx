@@ -20,6 +20,7 @@ import {
   GetApplicationConfig,
   OpenPath,
   SaveApplicationConfig,
+  SyncTheme,
 } from "~/../bindings/github.com/bal16/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
 export default function App() {
@@ -101,7 +102,7 @@ export default function App() {
   });
 
   onMount(() => {
-    void Events.Emit("theme:changed", themePref());
+    void SyncTheme(themePref());
     Events.On("menu:new-task", () => setShowAddTask(true));
     Events.On("menu:preferences", () => setShowPrefs(true));
     Events.On("menu:shortcuts", () => setShowShortcuts(true));
@@ -141,7 +142,7 @@ export default function App() {
           themePref={themePref}
           onSetTheme={(theme) => {
             setTheme(theme);
-            void Events.Emit("theme:changed", theme);
+            void SyncTheme(theme);
           }}
         />
       </Show>
