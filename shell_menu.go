@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -71,6 +73,7 @@ func (s *shell) installMenu() {
 
 	// Keep native radio selection in sync when the theme changes from the UI.
 	s.app.Event.On("theme:changed", func(e *application.CustomEvent) {
+		log.Printf("theme:changed event received: %#v", e.Data)
 		mode := ""
 		switch v := e.Data.(type) {
 		case string:
