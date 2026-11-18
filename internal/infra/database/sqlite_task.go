@@ -82,8 +82,18 @@ func (r *SQLiteTaskRepository) GetByID(id string) (*task.Task, error) {
 	var t task.Task
 	var statusStr string
 	var createdAtStr string
+	var fileName sql.NullString
+	var downloadPath sql.NullString
 
-	err := row.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.DownloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+	err := row.Scan(&t.ID, &t.GID, &t.URL, &fileName, &downloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+	if err == nil {
+		if fileName.Valid {
+			t.FileName = fileName.String
+		}
+		if downloadPath.Valid {
+			t.DownloadPath = downloadPath.String
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -101,8 +111,18 @@ func (r *SQLiteTaskRepository) GetByGID(gid string) (*task.Task, error) {
 	var t task.Task
 	var statusStr string
 	var createdAtStr string
+	var fileName sql.NullString
+	var downloadPath sql.NullString
 
-	err := row.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.DownloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+	err := row.Scan(&t.ID, &t.GID, &t.URL, &fileName, &downloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+	if err == nil {
+		if fileName.Valid {
+			t.FileName = fileName.String
+		}
+		if downloadPath.Valid {
+			t.DownloadPath = downloadPath.String
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -134,8 +154,18 @@ func (r *SQLiteTaskRepository) GetAll() ([]*task.Task, error) {
 		var t task.Task
 		var statusStr string
 		var createdAtStr string
+		var fileName sql.NullString
+		var downloadPath sql.NullString
 
-		err := rows.Scan(&t.ID, &t.GID, &t.URL, &t.FileName, &t.DownloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+		err := rows.Scan(&t.ID, &t.GID, &t.URL, &fileName, &downloadPath, &t.TotalLength, &t.CompletedLength, &t.Speed, &statusStr, &createdAtStr)
+		if err == nil {
+			if fileName.Valid {
+				t.FileName = fileName.String
+			}
+			if downloadPath.Valid {
+				t.DownloadPath = downloadPath.String
+			}
+		}
 		if err != nil {
 			return nil, err
 		}
