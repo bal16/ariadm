@@ -46,6 +46,9 @@ type shell struct {
 	taskService   *task.TaskService
 	configService *config.ConfigService
 
+	viewMenu    *application.Menu
+	themeRadios map[string]*application.MenuItem
+
 	windowMu          sync.Mutex
 	actuallyQuit      atomic.Bool
 	backgroundClosing atomic.Bool
