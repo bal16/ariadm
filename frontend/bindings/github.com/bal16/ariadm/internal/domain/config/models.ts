@@ -13,6 +13,7 @@ export class AppConfig {
      */
     "speed_limit": number;
     "max_concurrent_tasks": number;
+    "connections_per_download": number;
     "minimize_to_tray": boolean;
     "show_in_app_menu": boolean;
 
@@ -26,6 +27,9 @@ export class AppConfig {
         }
         if (!("max_concurrent_tasks" in $$source)) {
             this["max_concurrent_tasks"] = 0;
+        }
+        if (!("connections_per_download" in $$source)) {
+            this["connections_per_download"] = 0;
         }
         if (!("minimize_to_tray" in $$source)) {
             this["minimize_to_tray"] = false;
