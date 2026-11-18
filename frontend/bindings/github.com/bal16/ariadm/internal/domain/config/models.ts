@@ -14,6 +14,7 @@ export class AppConfig {
     "speed_limit": number;
     "max_concurrent_tasks": number;
     "minimize_to_tray": boolean;
+    "show_in_app_menu": boolean;
 
     /** Creates a new AppConfig instance. */
     constructor($$source: Partial<AppConfig> = {}) {
@@ -28,6 +29,9 @@ export class AppConfig {
         }
         if (!("minimize_to_tray" in $$source)) {
             this["minimize_to_tray"] = false;
+        }
+        if (!("show_in_app_menu" in $$source)) {
+            this["show_in_app_menu"] = false;
         }
 
         Object.assign(this, $$source);
