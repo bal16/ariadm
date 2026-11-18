@@ -1,9 +1,21 @@
 import { Show } from "solid-js";
-import { Activity, Check, Monitor, Moon, Plus, Settings, Sun } from "lucide-solid";
+import {
+  Activity,
+  Check,
+  FolderOpen,
+  Monitor,
+  Moon,
+  Pause,
+  Play,
+  Plus,
+  Settings,
+  Sun,
+} from "lucide-solid";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
@@ -11,7 +23,11 @@ import { useTheme } from "~/hooks/useTheme";
 
 interface MenuBarProps {
   onNewTask: () => void;
+  onOpenFolder: () => void;
   onPreferences: () => void;
+  onPauseAll: () => void;
+  onResumeAll: () => void;
+  onToggleInAppMenu: () => void;
 }
 
 export function MenuBar(props: MenuBarProps) {
@@ -31,14 +47,55 @@ export function MenuBar(props: MenuBarProps) {
         >
           File
         </DropdownMenuTrigger>
-        <DropdownMenuContent class="w-44 bg-popover border border-border text-popover-foreground shadow-md">
+        <DropdownMenuContent class="w-48 bg-popover border border-border text-popover-foreground shadow-md">
           <DropdownMenuItem
             onClick={props.onNewTask}
             class="text-xs font-medium cursor-pointer flex items-center space-x-2"
           >
             <Plus class="h-3.5 w-3.5 text-muted-foreground" />
-            <span class="flex-1">New Task</span>
+            <span class="flex-1">New Download</span>
             <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+N</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={props.onOpenFolder}
+            class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+          >
+            <FolderOpen class="h-3.5 w-3.5 text-muted-foreground" />
+            <span class="flex-1">Open Download Folder</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={props.onPreferences}
+            class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+          >
+            <Settings class="h-3.5 w-3.5 text-muted-foreground" />
+            <span class="flex-1">Preferences</span>
+            <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+P</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          as="button"
+          class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-hidden"
+        >
+          Downloads
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="w-44 bg-popover border border-border text-popover-foreground shadow-md">
+          <DropdownMenuItem
+            onClick={props.onPauseAll}
+            class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+          >
+            <Pause class="h-3.5 w-3.5 text-muted-foreground" />
+            <span class="flex-1">Pause All</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={props.onResumeAll}
+            class="text-xs font-medium cursor-pointer flex items-center space-x-2"
+          >
+            <Play class="h-3.5 w-3.5 text-muted-foreground" />
+            <span class="flex-1">Resume All</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -81,24 +138,12 @@ export function MenuBar(props: MenuBarProps) {
               <Check class="h-3.5 w-3.5 text-primary" />
             </Show>
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          as="button"
-          class="px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-sm transition-colors focus:outline-hidden"
-        >
-          Tools
-        </DropdownMenuTrigger>
-        <DropdownMenuContent class="w-48 bg-popover border border-border text-popover-foreground shadow-md">
+          <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={props.onPreferences}
+            onClick={props.onToggleInAppMenu}
             class="text-xs font-medium cursor-pointer flex items-center space-x-2"
           >
-            <Settings class="h-3.5 w-3.5 text-muted-foreground" />
-            <span class="flex-1">Preferences</span>
-            <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+P</DropdownMenuShortcut>
+            <span class="flex-1">Hide In-App Menu</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -110,14 +155,18 @@ export function MenuBar(props: MenuBarProps) {
         >
           Help
         </DropdownMenuTrigger>
-        <DropdownMenuContent class="w-56 bg-popover border border-border text-popover-foreground shadow-md">
+        <DropdownMenuContent class="w-52 bg-popover border border-border text-popover-foreground shadow-md">
           <DropdownMenuItem class="text-xs font-medium flex items-center justify-between">
-            <span>New download</span>
+            <span>New Download</span>
             <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+N</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem class="text-xs font-medium flex items-center justify-between">
             <span>Preferences</span>
             <DropdownMenuShortcut class="font-mono text-[10px]">Ctrl+P</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem class="text-xs font-medium">
+            <span>About AriaDM</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

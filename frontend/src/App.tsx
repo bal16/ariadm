@@ -16,6 +16,7 @@ import { useTaskQueue } from "~/hooks/useTaskQueue";
 import {
   GetApplicationConfig,
   OpenPath,
+  SaveApplicationConfig,
 } from "~/../bindings/github.com/bal16/ariadm/internal/ingress/wailsbridge/wailsbridge";
 
 export default function App() {
@@ -50,6 +51,17 @@ export default function App() {
       }
     }
     if (folder) void OpenPath(folder);
+  };
+
+  const toggleInAppMenu = async () => {
+    const cfg = appConfig();
+    if (!cfg) return;
+    try {
+      await SaveApplicationConfig({ ...cfg, show_in_app_menu: !cfg.show_in_app_menu });
+      void refetchAppConfig();
+    } catch {
+      // ignore
+    }
   };
 
   const notifiedCompletions = new Set<string>();
@@ -104,7 +116,14 @@ export default function App() {
   return (
     <div class="h-screen w-screen flex flex-col overflow-hidden relative select-none bg-background text-foreground font-sans antialiased">
       <Show when={showInAppMenu()}>
-        <MenuBar onNewTask={() => setShowAddTask(true)} onPreferences={() => setShowPrefs(true)} />
+        <MenuBar
+          onNewTask={() => setShowAddTask(true)}
+          onOpenFolder={() => void openFolder({ download_path: "" } as Task)}
+          onPreferences={() => setShowPrefs(true)}
+          onPauseAll={() => void pauseAll()}
+          onResumeAll={() => void resumeAll()}
+          onToggleInAppMenu={() => void toggleInAppMenu()}
+        />
       </Show>
 
       <Toolbar
