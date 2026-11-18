@@ -44,18 +44,40 @@ func (s *shell) installMenu() {
 	})
 
 	viewMenu := menu.AddSubmenu("View")
-	viewMenu.Add("Light Theme").OnClick(func(ctx *application.Context) {
+	s.viewMenu = viewMenu
+	s.themeRadios = map[string]*application.MenuItem{}
+
+	lightItem := viewMenu.AddRadio("Light Theme", false)
+	darkItem := viewMenu.AddRadio("Dark Theme", false)
+	systemItem := viewMenu.AddRadio("System Theme", true)
+	s.themeRadios["light"] = lightItem
+	s.themeRadios["dark"] = darkItem
+	s.themeRadios["system"] = systemItem
+
+	lightItem.OnClick(func(ctx *application.Context) {
 		s.app.Event.Emit("theme:set", "light")
 	})
-	viewMenu.Add("Dark Theme").OnClick(func(ctx *application.Context) {
+	darkItem.OnClick(func(ctx *application.Context) {
 		s.app.Event.Emit("theme:set", "dark")
 	})
-	viewMenu.Add("System Theme").OnClick(func(ctx *application.Context) {
+	systemItem.OnClick(func(ctx *application.Context) {
 		s.app.Event.Emit("theme:set", "system")
 	})
+
 	viewMenu.AddSeparator()
 	viewMenu.Add("Toggle In-App Menu").OnClick(func(ctx *application.Context) {
 		go s.toggleInAppMenu()
+	})
+
+	// Keep native radio selection in sync when the theme changes from the UI.
+	s.app.Event.On("theme:changed", func(e *application.CustomEvent) {
+		mode, _ := e.Data.(string)
+		for key, item := range s.themeRadios {
+			item.SetChecked(key == mode)
+		}
+		if s.viewMenu != nil {
+			s.viewMenu.Update()
+		}
 	})
 
 	helpMenu := menu.AddSubmenu("Help")

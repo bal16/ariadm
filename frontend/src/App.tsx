@@ -138,7 +138,10 @@ export default function App() {
           onShowShortcuts={() => setShowShortcuts(true)}
           onShowAbout={() => setShowAbout(true)}
           themePref={themePref}
-          onSetTheme={setTheme}
+          onSetTheme={(theme) => {
+            setTheme(theme);
+            void Events.Emit("theme:changed", theme);
+          }}
         />
       </Show>
 
